@@ -127,9 +127,7 @@ export function Transfer(): JSX.Element {
                                     }}
                                 >
                                     To keep your data synced, transfer your local data to
-                                    <b className="text-stone-900 text-base font-medium font-['Inter']">
-                                        MyCloud
-                                    </b>
+                                    <b className="text-stone-900 text-base font-medium font-['Inter']"> MyCloud </b>
                                     now
                                 </motion.p>
                             }
