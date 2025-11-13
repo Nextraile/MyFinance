@@ -1,18 +1,32 @@
 import { faClone } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useRef, useState, type JSX } from "react";
+import { useEffect, useRef, useState, type JSX } from "react";
 import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons"
 import { AnimatePresence, motion } from "motion/react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { TransferTrackerItem } from "@/components/TransferTrackerItem";
 
 export function Transfer(): JSX.Element {
     const [ isTransfer, setIsTransfer ] = useState<boolean>(false)
+    const [ selectedItems, setSelectedItems ] = useState<number[]>([])
 
+    const addItem = (value: number): void => {
+        setSelectedItems(prev => [...prev, value])
+    }
+
+    const removeItem = (value: number): void => {
+        setSelectedItems((prev) => prev.filter(item => item !== value));
+    }
+    
     // template for automated cut
     const tittle = "My Personal Tracker"
     const desc = "This is my own tracker for tracking my financial"
+
+    useEffect(() => {
+        console.log(selectedItems)
+    }, [selectedItems])
 
     const mainContent = (
         <motion.div 
@@ -150,88 +164,25 @@ export function Transfer(): JSX.Element {
                                 opacity: 0
                             }}
                             >
-                            <motion.div className="w-full h-18 border-3 rounded-md border-stone-300 text-left flex justify-between items-center px-3 py-3">
-                                <div className="flex flex-col">
-                                    <p className="text-stone-900/60 font-medium text-lg">
-                                    {
-                                        tittle.split("").map((char, i) => (
-                                            i < 20 ? char : null
-                                        ))
-                                    }
-                                    {
-                                        tittle.length > 20 && "..."
-                                    }
-                                    </p>
-                                    <p className="font-normal text-base text-zinc-600/60">
-                                        {
-                                            desc.split("").map((char, i) => (
-                                                i < 29 ? char : null
-                                            ))
-                                        }
-                                        {
-                                            desc.length > 27 && "..."
-                                        }
-                                    </p>
-                                </div>
-                                <div className="h-full">
-                                    <div className="h-3.5 w-3.5 border-stone-300 border-3 rounded-full" />
-                                </div>
-                            </motion.div>
-                            <motion.div className="w-full h-18 border-3 rounded-md border-stone-300 text-left flex justify-between items-center px-3 py-3">
-                                <div className="flex flex-col">
-                                    <p className="text-stone-900/60 font-medium text-lg">
-                                    {
-                                        tittle.split("").map((char, i) => (
-                                            i < 20 ? char : null
-                                        ))
-                                    }
-                                    {
-                                        tittle.length > 20 && "..."
-                                    }
-                                    </p>
-                                    <p className="font-normal text-base text-zinc-600/60">
-                                        {
-                                            desc.split("").map((char, i) => (
-                                                i < 29 ? char : null
-                                            ))
-                                        }
-                                        {
-                                            desc.length > 27 && "..."
-                                        }
-                                    </p>
-                                </div>
-                                <div className="h-full">
-                                    <div className="h-3.5 w-3.5 border-stone-300 border-3 rounded-full" />
-                                </div>
-                            </motion.div>
-                            <motion.div className="w-full h-18 border-3 rounded-md border-stone-300 text-left flex justify-between items-center px-3 py-3">
-                                <div className="flex flex-col">
-                                    <p className="text-stone-900/60 font-medium text-lg">
-                                    {
-                                        tittle.split("").map((char, i) => (
-                                            i < 20 ? char : null
-                                        ))
-                                    }
-                                    {
-                                        tittle.length > 20 && "..."
-                                    }
-                                    </p>
-                                    <p className="font-normal text-base text-zinc-600/60">
-                                        {
-                                            desc.split("").map((char, i) => (
-                                                i < 29 ? char : null
-                                            ))
-                                        }
-                                        {
-                                            desc.length > 27 && "..."
-                                        }
-                                    </p>
-                                </div>
-                                <div className="h-full">
-                                    <div className="h-3.5 w-3.5 border-stone-300 border-3 rounded-full" />
-                                </div>
-                            </motion.div>
-                        </motion.div>}
+                                <TransferTrackerItem id={1} tittle={tittle} desc={desc} addItem={addItem} removeItem={removeItem} />
+                                <TransferTrackerItem id={2} tittle={tittle} desc={desc} addItem={addItem} removeItem={removeItem} />
+                                <TransferTrackerItem id={3} tittle={tittle} desc={desc} addItem={addItem} removeItem={removeItem} />
+                                <p className="text-base font-semilight text-right text-stone-400">
+                                    <AnimatePresence mode="popLayout">
+                                        <motion.span
+                                        key={selectedItems.length}
+                                        initial={{ y: 10, opacity: 0 }}
+                                        animate={{ y: 0, opacity: 1 }}
+                                        exit={{ y: -10, opacity: 0 }}
+                                        className="inline-block min-w-[1ch] text-center"
+                                        >
+                                            {selectedItems.length}
+                                        </motion.span>
+                                    </AnimatePresence>{" "}
+                                    / 3 selected
+                                </p>
+                        </motion.div>
+                        }
                     </AnimatePresence>
                 </motion.div>
                 <motion.div className="flex flex-col gap-1.5 w-full">
