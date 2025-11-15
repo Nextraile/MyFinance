@@ -1,16 +1,21 @@
-import { faClone } from "@fortawesome/free-regular-svg-icons";
+import { faClone, faThumbsUp } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useEffect, useRef, useState, type JSX } from "react";
-import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons"
-import { AnimatePresence, motion } from "motion/react";
+import { useEffect, useState, type JSX } from "react";
+import { faTriangleExclamation, faUserCheck } from "@fortawesome/free-solid-svg-icons"
+import { AnimatePresence, motion, spring } from "motion/react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { TransferTrackerItem } from "@/components/TransferTrackerItem";
+import { OrbitProgress } from "react-loading-indicators"; 
+
 
 export function Transfer(): JSX.Element {
     const [ isTransfer, setIsTransfer ] = useState<boolean>(false)
     const [ selectedItems, setSelectedItems ] = useState<number[]>([])
+    const [ isLoading, setIsLoading ] = useState<boolean>(false)
+    const [ loadingTooLong, setLoadingTooLong ] = useState<boolean>(false)
+    const [ isSuccess, setIsSuccess ] = useState<boolean>(false)
+    const [ isFailed, setIsFailed ] = useState<boolean>(false)
 
     const addItem = (value: number): void => {
         setSelectedItems(prev => [...prev, value])
@@ -24,14 +29,72 @@ export function Transfer(): JSX.Element {
     const tittle = "My Personal Tracker"
     const desc = "This is my own tracker for tracking my financial"
 
+    // simulation only
     useEffect(() => {
         console.log(selectedItems)
     }, [selectedItems])
 
+    useEffect(() => {
+        if(!isLoading) {
+            setLoadingTooLong(false)
+        }
+    }, [isLoading])
+
+    // simulation only
+    const eraseData = () => {
+        setIsLoading(true)
+        setTimeout(() => {
+            setLoadingTooLong(true)
+        }, 3000)
+        setTimeout(() => {
+            setLoadingTooLong(false)
+            setIsLoading(false)
+            setIsFailed(true)
+        }, 5255)
+    }
+
+    // simulation only
+    const transferData = () => {
+        setIsLoading(true)
+        setTimeout(() => {
+            setLoadingTooLong(true)
+        }, 3000)
+        setTimeout(() => {
+            setLoadingTooLong(false)
+            setIsLoading(false)
+            setIsSuccess(true)
+        }, 5255)
+    }
+
     const mainContent = (
         <motion.div 
+        key="main-content"
         className="flex flex-col items-center sm:w-85 w-[75%] gap-5"
-        layout
+        initial={{
+            opacity: 0,
+            x: 20
+        }}
+        animate={{
+            opacity: 100,
+            x: 0,
+            transition: {
+                type: spring,
+                stiffness: 120,
+                damping: 15,
+                mass: 0.5,
+                delay: 0.7
+            }
+        }}
+        exit={{
+            x: -30,
+            opacity: 0,
+            transition: {
+                type: spring,
+                stiffness: 120,
+                damping: 15,
+                mass: 0.5
+            }
+        }}
         >
             <motion.div>
                 <AnimatePresence mode="wait">
@@ -39,7 +102,7 @@ export function Transfer(): JSX.Element {
                         <motion.div
                         key="pre-transfer"
                             initial={{
-                                x: 30,
+                                x: 50,
                                 opacity: 0
                             }}
                             animate={{
@@ -47,7 +110,7 @@ export function Transfer(): JSX.Element {
                                 opacity: 100
                             }}
                             exit={{
-                                x: 30,
+                                x: 50,
                                 opacity: 0
                             }}
                             >
@@ -128,7 +191,7 @@ export function Transfer(): JSX.Element {
                         {!isTransfer &&
                             <motion.p
                             key="pre-transfer"
-                            className="text-stone-900 text-base font-normal font-['Inter']"
+                            className="text-stone-900 text-base font-normal"
                             initial={{
                                 x: -30,
                                 opacity: 0
@@ -143,7 +206,7 @@ export function Transfer(): JSX.Element {
                             }}
                             >
                                 To keep your data synced, transfer your local data to
-                                <b className="text-stone-900 text-base font-medium font-['Inter']"> MyCloud </b>
+                                <b className="text-stone-900 text-base font-medium"> MyCloud </b>
                                 now
                             </motion.p>
                         }
@@ -219,7 +282,7 @@ export function Transfer(): JSX.Element {
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
                                             <AlertDialogCancel>Let me think...</AlertDialogCancel>
-                                            <AlertDialogAction>Yes, Im Sure</AlertDialogAction>
+                                            <AlertDialogAction onClick={() => eraseData()}>Yes, Im Sure</AlertDialogAction>
                                         </AlertDialogFooter>
                                     </AlertDialogContent>
                                 </AlertDialog>
@@ -270,6 +333,7 @@ export function Transfer(): JSX.Element {
                             {isTransfer && 
                                 <motion.button 
                                 key="in-transfer2"
+                                onClick={() => transferData()}
                                 className={`text-center items-center rounded-md h-9 flex-1 grow text-neutral-900 flex justify-center [background-image:var(--color-button-primary)] text-base font-medium`}
                                 initial={{
                                     x: -30,
@@ -320,9 +384,139 @@ export function Transfer(): JSX.Element {
         </motion.div>
     )
 
+    const loading = (
+        <motion.div
+        key="loading"
+        className="flex flex-col items-center gap-5"
+        initial={{
+            opacity: 0,
+            x: 20
+        }}
+        animate={{
+            opacity: 100,
+            x: 0,
+            transition: {
+                type: spring,
+                stiffness: 120,
+                damping: 15,
+                mass: 0.5,
+                delay: 0.3
+            }
+        }}
+        exit={{
+            x: -30,
+            opacity: 0,
+            transition: {
+                type: spring,
+                stiffness: 120,
+                damping: 15,
+                mass: 0.5
+            }
+        }}
+        >
+            <OrbitProgress variant="track-disc" size="small" speedPlus={2} easing="ease-in-out" />
+            {loadingTooLong && <motion.p initial={{y: -20, opacity: 0}} animate={{y:0, opacity:100, transition: { delay: 0.2 }}} className="font-normal text-base text-center text-nowrap text-neutral-500 w-full">feeling stuck? <span className="text-blue-400 underline underline-offset-2 hover:text-blue-500" onClick={() => setIsLoading(false)}>cancel</span> anytime.</motion.p>}
+        </motion.div>
+    )
+
+    const success = (
+        <motion.div 
+            className="flex flex-col items-center gap-5 sm:w-85 w-[75%]"
+            initial={{
+                opacity: 0,
+                x: 20
+            }}
+            animate={{
+                opacity: 100,
+                x: 0,
+                transition: {
+                    type: spring,
+                    stiffness: 120,
+                    damping: 15,
+                    mass: 0.5,
+                    delay: 0.3
+                }
+            }}
+            exit={{
+                x: -30,
+                opacity: 0,
+                transition: {
+                    type: spring,
+                    stiffness: 120,
+                    damping: 15,
+                    mass: 0.5
+                }
+            }}
+        >
+            <FontAwesomeIcon icon={faUserCheck} className="text-7xl" />
+            <div className="flex flex-col gap-6">
+                <div className="flex items-center flex-col gap-2.5">
+                    <h1 className={`self-stretch text-center justify-start text-stone-900 text-2xl font-semibold`}>Transfer Successful!</h1>
+                    <p className="text-stone-900 text-base font-normal text-center w-[95%]">
+                        Your data is now synced to <span className="text-stone-900 text-base font-medium">MyCloud.</span> <br />
+                        Enjoy cross device access and worry-free about losing your data.
+                    </p>
+                </div>
+                <Button className="text-center items-center rounded-md h-9 flex-1 grow text-neutral-900 flex justify-center [background-image:var(--color-button-primary)] text-base font-medium">Sign In</Button>
+            </div>
+        </motion.div>
+    )
+
+
+    const failed = (
+        <motion.div 
+            className="flex flex-col items-center gap-5 sm:w-85 w-[75%]"
+            initial={{
+                opacity: 0,
+                x: 20
+            }}
+            animate={{
+                opacity: 100,
+                x: 0,
+                transition: {
+                    type: spring,
+                    stiffness: 120,
+                    damping: 15,
+                    mass: 0.5,
+                    delay: 0.3
+                }
+            }}
+            exit={{
+                x: -30,
+                opacity: 0,
+                transition: {
+                    type: spring,
+                    stiffness: 120,
+                    damping: 15,
+                    mass: 0.5
+                }
+            }}
+        >
+            <FontAwesomeIcon icon={faThumbsUp} className="text-7xl" />
+            <div className="flex flex-col gap-6">
+                <div className="flex items-center flex-col gap-2.5">
+                    <h1 className={`self-stretch text-center justify-start text-stone-900 text-2xl font-semibold`}>Data Cleaned!</h1>
+                    <p className="text-stone-900 text-base font-normal text-center w-[95%]">
+                        Your data is now synced to <span className="text-stone-900 text-base font-medium">MyCloud.</span> <br />
+                        Enjoy cross device access and worry-free about losing your data.
+                    </p>
+                </div>
+                <Button className="text-center items-center rounded-md h-9 flex-1 grow text-neutral-900 flex justify-center [background-image:var(--color-button-primary)] text-base font-medium">Start Fresh</Button>
+            </div>
+        </motion.div>
+    )
+
     return (
-        <section className="flex justify-center items-center min-h-screen -mt-5">
-            {mainContent}
-        </section>
+        <motion.section 
+            className="flex justify-center items-center min-h-screen -mt-5"
+            layout
+        >
+            <AnimatePresence mode="popLayout">
+                {!isLoading && !isSuccess && !isFailed && mainContent}
+                {isLoading && loading}
+                {isSuccess && success}
+                {isFailed && failed}
+            </AnimatePresence>
+        </motion.section>
     )
 }
