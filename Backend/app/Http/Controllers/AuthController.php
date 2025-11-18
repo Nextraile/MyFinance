@@ -11,6 +11,10 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use App\Http\Requests\ForgotPasswordRequest;
+use App\Http\Requests\ResetPasswordRequest;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -114,6 +118,52 @@ class AuthController extends Controller
     }
 
     /**
+     * Handle forgot password request
+     */
+    public function forgotPassword(ForgotPasswordRequest $request)
+    {
+        try {
+            $status = Password::sendResetLink(
+                $request->only('email')
+            );
+
+            if ($status !== Password::RESET_LINK_SENT) {
+                return $this->errorResponse('Unable to send password reset link', Response::HTTP_BAD_REQUEST);
+            }
+
+            return $this->authResponse('Password reset link sent to your email address');
+            
+        } catch (\Exception $e) {
+            return $this->execptionResponse($e, 'forgot password error', 'unable to process password reset request');
+        }
+    }
+
+    public function resetPassword(ResetPasswordRequest $request)
+    {
+        try {
+            $status = Password::reset(
+                $request->only('email', 'password', 'password_confirmation', 'token'),
+
+                function (User $user, string $password) {
+                    $user->forceFill([
+                        'password' => Hash::make($password)
+                    ])->setRememberToken(Str::random(60));
+
+                    $user->save();
+                }
+            );
+
+            if ($status !== Password::PASSWORD_RESET) {
+                return $this->errorResponse('Invalid or expired reset token', Response::HTTP_BAD_REQUEST);
+            }
+
+            return $this->authResponse('Password has been reset successfully');
+
+        } catch (\Exception $e) {
+            return $this->execptionResponse($e, 'reset password error', 'unable to reset password');
+        }
+    }
+    /**
      * Success response helper method
      */
     private function authResponse($message, $user = null, $token = null, $statusCode = Response::HTTP_OK)
@@ -141,6 +191,9 @@ class AuthController extends Controller
         return response()->json($response, $statusCode);
     }
 
+    /**
+     * Error response helper method
+     */
     private function errorResponse($message, $statusCode)
     {
         return response()->json([
@@ -150,6 +203,9 @@ class AuthController extends Controller
         ], $statusCode);
     }
 
+    /**
+     * Exception response helper method
+     */
     private function execptionResponse(Exception $e, $context, $message, $statusCode = Response::HTTP_INTERNAL_SERVER_ERROR)
     {
         Log::error($context . ' : ' . $e->getMessage());
