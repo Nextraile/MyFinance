@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use App\Http\Requests\ForgotPasswordRequest;
 use App\Http\Requests\ResetPasswordRequest;
+use Illuminate\Cache\RateLimiter;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 
@@ -141,6 +142,15 @@ class AuthController extends Controller
     public function resetPassword(ResetPasswordRequest $request)
     {
         try {
+            $throttleKey = 'reset-password:' . $request->email;
+            $maxAttempts = 5;
+
+            if (app(RateLimiter::class)->tooManyAttempts($key, $maxAttempts)) {
+                return $this->errorResponse('Too many password reset attempts. Please try again later.', Response::HTTP_TOO_MANY_REQUESTS);
+            };
+
+            app(RateLimiter::class)->hit($throttleKey, 3600);
+
             $status = Password::reset(
                 $request->only('email', 'password', 'password_confirmation', 'token'),
 
