@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Helpers\ResponseHelper;
@@ -35,7 +34,7 @@ class AuthController extends Controller
 
             $token = $user->createToken('authToken')->plainTextToken;
 
-            return ResponseHelper::successResponse(
+            return ResponseHelper::createdResponse(
                 [
                     'user_info' => [
                         'id' => $user->id,
@@ -46,8 +45,7 @@ class AuthController extends Controller
                     'token_type' => 'bearer',
                     'expires_in' => config('sanctum.expiration'),
                 ],
-                'user successfully registered',
-                Response::HTTP_CREATED
+                'user successfully registered'
             );
             // return $this->authResponse('user successfully registered', $user, $token, Response::HTTP_CREATED);
 
@@ -74,7 +72,8 @@ class AuthController extends Controller
         try {
             $credentials = $request->validated();
 
-            if (!Auth::attempt($credentials)) {
+            $user = User::where('email', $credentials['email'])->first();
+            if (!$user || !Hash::check($credentials['password'], $user->password)) {
                 return ResponseHelper::unauthorizedResponse('invalid credentials');
                 // return response()->json([
                 //     'response_code' => Response::HTTP_UNAUTHORIZED,
@@ -83,7 +82,7 @@ class AuthController extends Controller
                 // ], Response::HTTP_UNAUTHORIZED);
             }
 
-            $user = Auth::user();
+            // $user = Auth::user();
 
             $token = $user->createToken('authToken')->plainTextToken;
 
@@ -98,8 +97,7 @@ class AuthController extends Controller
                     'token_type' => 'bearer',
                     'expires_in' => config('sanctum.expiration'),
                 ],
-                'login successful',
-                Response::HTTP_OK
+                'login successful', Response::HTTP_OK
             );
             // return $this->authResponse('login successful', $user,  $token);
 
@@ -216,6 +214,8 @@ class AuthController extends Controller
                 return ResponseHelper::errorResponse('Invalid or expired reset token', Response::HTTP_BAD_REQUEST);
                 // return $this->errorResponse('Invalid or expired reset token', Response::HTTP_BAD_REQUEST);
             }
+
+            app(RateLimiter::class)->clear($throttleKey);
 
             return ResponseHelper::successResponse(
                 null,
