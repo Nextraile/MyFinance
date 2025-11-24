@@ -1,9 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\TrackerController;
-use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\TrackerController;
+use App\Http\Controllers\API\TransactionController;
+use App\Http\Controllers\API\AvatarController;
 
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:api')->name('register');
@@ -19,6 +20,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::apiResource('trackers', TrackerController::class)->middleware('throttle:api');
     Route::apiResource('transactions', TransactionController::class)->middleware('throttle:api');
+
+    Route::prefix('user')->group(function () {
+        Route::put('/avatar', [AvatarController::class, 'update'])->middleware('throttle:api')->name('profile-avatar-update');
+    });
 
     Route::get('search/trackers', [TrackerController::class, 'search'])->middleware('throttle:api');
     Route::get('search/transactions', [TransactionController::class, 'search'])->middleware('throttle:api');
