@@ -12,10 +12,12 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AnimatePresence, motion } from "motion/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Checkbox } from "@/components/ui/checkbox";
+import { spring } from "motion-dom";
+
 
 export function Signup(): JSX.Element {
     const [show, setShow] = useState<boolean>(false)
-
+    const [ isOut, setIsOut ] = useState<boolean>(false)
     const signupSchema = z.object({
         username: z.string(),
         email: z.email(),
@@ -39,83 +41,155 @@ export function Signup(): JSX.Element {
 
     return (
         <section className="w-full h-screen flex flex-col gap-12 justify-center items-center -mt-5">
-            <h1 className="text-center justify-start text-stone-900 text-3xl font-bold tracking-wide">MyFinance</h1>
-            <div className="flex flex-col gap-8 sm:w-85 w-[75%]">
-                <Alert variant="destructive" className="w-full hidden">
-                    <AlertCircleIcon />
-                    <AlertTitle className="font-semibold tracking-normal">Sign In Failed</AlertTitle>
-                    <AlertDescription>
-                        Your attempt to sign in has failed due to reasons below
-                        <ul className="list-inside list-disc text-sm">
-                            <li>Email or password is wrong</li>
-                        </ul>
-                    </AlertDescription>
-                </Alert>
-                <div className="w-full flex flex-col gap-4">
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit(login)}>
-                            <div className="flex flex-col gap-5">
-                                <div className="flex flex-col items-start gap-3.5">
-                                    <div className="flex flex-col gap-7 w-full">
-                                        <FormField
-                                            control={form.control}
-                                            name="username"
-                                            render={( { field } ) => {
-                                                return (
-                                                <FormItem>
-                                                    <FormLabel>Username:</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="text" {...field} />
-                                                    </FormControl>
-                                                    <FormDescription>This is your public display name</FormDescription>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}}
-                                        />
-                                        <div className="flex flex-col gap-5">
+            <AnimatePresence>
+                {!isOut && <motion.h1
+                    className="text-center justify-start text-stone-900 text-3xl font-bold tracking-wide"
+                    initial={{
+                        x: 30,
+                        opacity: 0,
+                        filter: "blur(5px)"
+                    }}
+                    animate={{
+                        x:0,
+                        opacity: 100,
+                        filter: "blur(0px)",
+                        transition: {
+                            type: spring,
+                            stiffness: 120,
+                            damping: 15,
+                            mass: 0.5,
+                            delay: 0.5
+                        }
+                    }}
+                    exit={{
+                        x: -30,
+                        opacity: 0,
+                        transition: {
+                            type: spring,
+                            stiffness: 120,
+                            damping: 15,
+                            mass: 0.5,
+                            delay: 0.2
+                        }
+                    }}
+                >
+                    MyFinance
+                </motion.h1>}
+            </AnimatePresence>
+            <AnimatePresence>
+                {!isOut && <motion.div
+                    className="flex flex-col gap-8 sm:w-85 w-[75%]"
+                    initial={{
+                        x: 30,
+                        opacity: 0,
+                        filter: "blur(5px)"
+                    }}
+                    animate={{
+                        x:0,
+                        opacity: 100,
+                        filter: "blur(0px)",
+                        transition: {
+                            type: spring,
+                            stiffness: 120,
+                            damping: 15,
+                            mass: 0.5,
+                            delay: 0.7
+                        }
+                    }}
+                    exit={{
+                        x: -30,
+                        opacity: 0,
+                        transition: {
+                            type: spring,
+                            stiffness: 120,
+                            damping: 15,
+                            mass: 0.5
+                        }
+                    }}
+                >
+                    <Alert variant="destructive" className="w-full hidden">
+                        <AlertCircleIcon />
+                        <AlertTitle className="font-semibold tracking-normal">Sign In Failed</AlertTitle>
+                        <AlertDescription>
+                            Your attempt to sign in has failed due to reasons below
+                            <ul className="list-inside list-disc text-sm">
+                                <li>Email or password is wrong</li>
+                            </ul>
+                        </AlertDescription>
+                    </Alert>
+                    <div className="w-full flex flex-col gap-4">
+                        <Form {...form}>
+                            <form onSubmit={form.handleSubmit(login)}>
+                                <div className="flex flex-col gap-5">
+                                    <div className="flex flex-col items-start gap-3.5">
+                                        <div className="flex flex-col gap-7 w-full">
                                             <FormField
                                                 control={form.control}
-                                                name="email"
+                                                name="username"
                                                 render={( { field } ) => {
                                                     return (
-                                                    <FormItem>
-                                                        <FormLabel>Email:</FormLabel>
+                                                    <FormItem className="flex flex-col items-center w-full">    
+                                                        <FormLabel className="self-start w-full">Username:</FormLabel>
                                                         <FormControl>
-                                                            <Input type="text" {...field} />
+                                                            <motion.div whileTap={{ scale: 0.95, width: "110%", y: 3, transition: { type: spring, stiffness: 120, damping: 2, mass: 0.5 }}} className="w-full">
+                                                                <Input type="text" {...field} className="w-full" />
+                                                            </motion.div>
                                                         </FormControl>
+                                                        <FormDescription className="text-left self-start">This is your public display name</FormDescription>
                                                         <FormMessage />
                                                     </FormItem>
                                                 )}}
                                             />
-                                            <FormField
-                                                control={form.control}
-                                                name="password"
-                                                render={( field ) => (
-                                                    <FormItem className="select-none">
-                                                        <FormLabel>Password:</FormLabel>
-                                                        <FormControl>
-                                                            <div className="flex items-center justify-end">
-                                                                <Input type={`${show ? "text" : "password"}`} {...field} />
-                                                                <FontAwesomeIcon icon={faEyeSlash} onClick={() => setShow(!show)} className="absolute pr-3 text-neutral-700" />
-                                                            </div>
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
+                                            <div className="flex flex-col gap-5">
+                                                <FormField
+                                                    control={form.control}
+                                                    name="email"
+                                                    render={( { field } ) => {
+                                                        return (
+                                                            <FormItem className="flex flex-col items-center w-full">    
+                                                                <FormLabel className="self-start w-full">Email:</FormLabel>
+                                                                <FormControl>
+                                                                    <motion.div whileTap={{ scale: 0.95, width: "110%", y: 3, transition: { type: spring, stiffness: 120, damping: 2, mass: 0.5 }}} className="w-full">
+                                                                        <Input type="text" {...field} className="w-full" />
+                                                                    </motion.div>
+                                                                </FormControl>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                    )}}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="password"
+                                                    render={( { field } ) => (
+                                                        <FormItem className="flex flex-col items-center w-full select-none">
+                                                            <FormLabel className="self-start">Password:</FormLabel>
+                                                            <FormControl>
+                                                                <motion.div className="flex items-center justify-end w-full" whileTap={{ scale: 0.95, width: "110%", y: 3, transition: { type: spring, stiffness: 120, damping: 2, mass: 0.5 }}}>
+                                                                    <Input type={`${show ? "text" : "password"}`} {...field} className="w-full" />
+                                                                    <FontAwesomeIcon icon={faEyeSlash} onClick={() => setShow(!show)} className="absolute pr-3 text-neutral-700" />
+                                                                </motion.div>
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Checkbox id="tos" />
+                                            <label htmlFor="tos" className="font-normal text-sm">I agree to the <span className="font-medium text-blue-500 underline">Terms of Services</span></label>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <Checkbox id="tos" /> 
-                                        <label htmlFor="tos" className="font-normal text-sm">I agree to the <span className="font-medium text-blue-500 underline">Terms of Services</span></label>
-                                    </div>
+                                    <motion.div className="w-full flex justify-center items-center self-center " whileTap={{ scale: 0.95, width: "95%", y: 2, transition: { type: spring, stiffness: 120, damping: 2, mass: 0.5 }}} animate={{ transition: { type: spring, stiffness: 120, damping: 2, mass: 0.5 } }}>
+                                        <Button type="submit" className="text-neutral-800 font-semibold [background-image:var(--color-button-primary)] w-full">Create account</Button>
+                                    </motion.div>
+                                    <p className="w-full text-center font-medium text-sm">Already have an account? <span onClick={() => {setIsOut(true); setTimeout(() => window.location.href = "/app/access", 700) }} className="text-blue-500 hover:text-blue-400 underline">Sign in</span></p>
                                 </div>
-                                <Button type="submit" className="text-neutral-800 font-semibold [background-image:var(--color-button-primary)]">Create account</Button>
-                            </div>
-                        </form>
-                    </Form>
-                </div>
-            </div>
+                            </form>
+                        </Form>
+                    </div>
+                </motion.div>}
+            </AnimatePresence>
         </section>
     )
 }
