@@ -1,0 +1,133 @@
+import { AnimatePresence, spring } from "motion/react";
+import { useState, type JSX } from "react";
+import { motion } from "motion/react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowLeft, faArrowRightFromBracket, faLock, faSun, faUserPen } from "@fortawesome/free-solid-svg-icons";
+import { userData } from "@/lib/userData";
+import { XIcon } from "lucide-react";
+
+interface trackerNavbarInterface {
+    isOut: boolean,
+    setIsOut: (value: boolean) => void,
+    backLink: string,
+    trackerName: string
+}
+
+export function TrackerNavbar({ isOut, setIsOut, backLink, trackerName }: trackerNavbarInterface): JSX.Element {
+    const [ isAccountOpen, setIsAccountOpen ] = useState<boolean>(false)
+
+    return (
+            <div className="flex justify-center z-10 fixed">
+                <AnimatePresence>
+                    {!isOut && <motion.div
+                    key={"navbar"}
+                    className="w-screen"
+                    initial={{
+                        x: 30,
+                        opacity: 0,
+                        // filter: "blur(5px)"
+                    }}
+                    animate={{
+                        x: 0,
+                        opacity: 100,
+                        // filter: "blur(0px)",
+                        transition: {
+                            delay: 0.3
+                        }
+                    }}
+                    exit={{
+                        x: -30,
+                        opacity: 0
+                    }}
+                    >
+                        <div className="fixed z-0 bg-background-primary w-full h-15" />
+                        <div className="flex justify-center items-center fixed w-screen z-10 mt-5 px-5">
+                            <div className="flex justify-between items-center z-10 w-full">
+                                <FontAwesomeIcon icon={faArrowLeft} onClick={() => {setIsOut(true); setTimeout(() => window.location.href = backLink, 400)}} className="w-10 h-10 text-xl text-neutral-800" />
+                                <h1 className="ml-[7px] font-medium text-base text-neutral-500">{trackerName}</h1>
+                                <motion.div>
+                                    <AnimatePresence mode="popLayout">
+                                        {!isAccountOpen &&
+                                            <motion.div
+                                                key="accountDetailsClosed"
+                                                onClick={() => setIsAccountOpen(true)}
+                                                style={{backgroundImage: `url(${userData.userImages})`, backgroundPosition: "center", backgroundRepeat: "no-repeat", backgroundSize: "contain"}}
+                                                className="w-8 h-8 rounded-full"
+                                                initial={{
+                                                    opacity: 0
+                                                }}
+                                                animate={{
+                                                    opacity: 100
+                                                }}
+                                            />}
+                                        {isAccountOpen &&
+                                            <motion.div
+                                                key="accountDetailsOpen"
+                                                onClick={() => setIsAccountOpen(false)}
+                                                className="w-8 h-8 rounded-full border-[0.5px] shadow flex justify-center items-center text-neutral-500"
+                                                initial={{
+                                                    opacity: 0
+                                                }}
+                                                animate={{
+                                                    opacity: 100
+                                                }}
+                                            >
+                                                <XIcon />
+                                        </motion.div>}
+                                    </AnimatePresence>
+                                </motion.div>
+                            </div>
+                        </div>
+                    </motion.div>}
+                </AnimatePresence>
+                <div>
+                    <motion.div>
+                        <AnimatePresence>
+                            {isAccountOpen && !isOut && <motion.div 
+                                key="accountDetails"
+                                className="fixed right-0 sm:right-[4%] top-0 mt-15 mr-6 flex flex-col gap-3.5 bg-neutral-50/40 border-[0.5px] shadow p-3.5 rounded-xl backdrop-blur-[2px] backdrop-grayscale-50"
+                                initial = {{
+                                    x: 10,
+                                    opacity: 0
+                                }}
+                                animate = {{
+                                    x: 0,
+                                    opacity: 100,
+                                    transition: {
+                                        type: spring,
+                                        stiffness: 380,
+                                        damping: 30,
+                                        mass: 1
+                                    }
+                                }}
+                                exit={{
+                                    x: 10,
+                                    opacity: 0,
+                                    transition: {
+                                        type: spring,
+                                        stiffness: 400,
+                                        damping: 30,
+                                        mass: 1
+                                    }
+                                }}
+                            >
+                                <div className="flex items-center gap-2.5">
+                                    <div style={{backgroundImage: `url(${userData.userImages})`, backgroundPosition: "center", backgroundRepeat: "no-repeat", backgroundSize: "contain"}} className="w-10 h-10 rounded-full"></div>
+                                    <div>
+                                        <h3 className="font-medium text-[15px]">{userData.username}</h3>
+                                        <p className="font-medium text-xs">{userData.email}</p>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col gap-2 w-full">
+                                    <div className="flex items-center gap-2.5 bg-green-500/20 rounded-full py-2 px-4 w-full">
+                                        <FontAwesomeIcon icon={faSun}/>
+                                        <p className="font-medium text-[15px]">Switch theme</p>
+                                    </div>
+                                </div>
+                            </motion.div>}
+                        </AnimatePresence>
+                    </motion.div>
+                </div>
+            </div>
+    )
+}

@@ -93,7 +93,7 @@ export function Dashboard(): JSX.Element {
                     <AnimatePresence mode="popLayout">
                         <motion.div>
                             <AnimatePresence>
-                                {isAccountOpen && <motion.div
+                                {isAccountOpen && !isOut && <motion.div
                                     key="accountDetails"
                                     className="fixed right-0 sm:right-[4%] top-0 mt-18 mr-6 flex flex-col gap-3.5 bg-neutral-50/80 border-[0.5px] shadow p-3.5 rounded-xl backdrop-blur-[2px] backdrop-grayscale-50 z-20"
                                     initial = {{
@@ -133,7 +133,7 @@ export function Dashboard(): JSX.Element {
                                             <FontAwesomeIcon icon={faSun}/>
                                             <p className="font-medium text-[15px]">Switch theme</p>
                                         </div>
-                                        <div className="flex items-center gap-2.5 bg-green-500/20 rounded-full py-2 px-4 w-full">
+                                        <div onClick={() => {setIsOut(true); setTimeout(() => window.location.href = "/app/editProfile", 500)}} className="flex items-center gap-2.5 bg-green-500/20 rounded-full py-2 px-4 w-full">
                                             <FontAwesomeIcon icon={faUserPen} />
                                             <p className="font-medium text-[15px]">Edit Profile</p>
                                         </div>

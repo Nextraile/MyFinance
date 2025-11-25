@@ -10,10 +10,10 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DialogDescription } from "@radix-ui/react-dialog";
+import { TrackerNavbar } from "@/components/TrackerNavbar";
 
 
 export function Tracker(): JSX.Element {
-    const [ isAccountOpen, setIsAccountOpen ] = useState<boolean>(false)
     const [ isOut, setIsOut ] = useState<boolean>(false)
     const [ pendapatanUrl, setPendapatanUrl ] = useState<string | null>(null)
     const [ pengeluaranUrl, setPengeluaranUrl ] = useState<string | null>(null)
@@ -45,128 +45,7 @@ export function Tracker(): JSX.Element {
 
     return (
         <section className="flex flex-col items-center">
-            <div className="flex justify-center z-10 w-[87%]">
-                <AnimatePresence>
-                    <div className="fixed z-0 bg-background-primary w-full h-15" />
-                    {!isOut && <motion.div
-                        key={"navbar"}
-                        className="flex justify-center items-center mt-5 w-full z-10"
-                        initial={{
-                            x: 30,
-                            opacity: 0,
-                            // filter: "blur(5px)"
-                        }}
-                        animate={{
-                            x: 0,
-                            opacity: 100,
-                            // filter: "blur(0px)",
-                            transition: {
-                                delay: 0.3
-                            }
-                        }}
-                        exit={{
-                            x: -30,
-                            opacity: 0
-                        }}
-                    >
-                        <div className="flex justify-between items-center gap-2 mt-5 w-[85%] z-10 fixed">
-                            <FontAwesomeIcon icon={faArrowLeft} onClick={() => {setIsOut(true); setTimeout(() => window.location.href = "/app", 400)}} className="w-10 h-10 text-xl text-neutral-800" />
-                            <h1 className="ml-[7px] font-medium text-base text-neutral-500">My New Tracker</h1>
-                            <motion.div>
-                                <AnimatePresence mode="popLayout">
-                                    {!isAccountOpen &&
-                                        <motion.div
-                                            key="accountDetailsClosed"
-                                            onClick={() => setIsAccountOpen(true)}
-                                            style={{backgroundImage: `url(${userData.userImages})`, backgroundPosition: "center", backgroundRepeat: "no-repeat", backgroundSize: "contain"}}
-                                            className="w-8 h-8 rounded-full"
-                                            initial={{
-                                                opacity: 0
-                                            }}
-                                            animate={{
-                                                opacity: 100
-                                            }}
-                                        />}
-                                    {isAccountOpen &&
-                                        <motion.div
-                                            key="accountDetailsOpen"
-                                            onClick={() => setIsAccountOpen(false)}
-                                            className="w-8 h-8 rounded-full border-[0.5px] shadow flex justify-center items-center text-neutral-500"
-                                            initial={{
-                                                opacity: 0
-                                            }}
-                                            animate={{
-                                                opacity: 100
-                                            }}
-                                        >
-                                            <XIcon />
-                                    </motion.div>}
-                                </AnimatePresence>
-                            </motion.div>
-                        </div>
-                    </motion.div>}
-                </AnimatePresence>
-                <div>
-                    <motion.div>
-                        <AnimatePresence>
-                            {isAccountOpen && <motion.div 
-                                key="accountDetails"
-                                className="fixed right-0 sm:right-[4%] top-0 mt-15 mr-6 flex flex-col gap-3.5 bg-neutral-50/40 border-[0.5px] shadow p-3.5 rounded-xl backdrop-blur-[2px] backdrop-grayscale-50"
-                                initial = {{
-                                    x: 10,
-                                    opacity: 0
-                                }}
-                                animate = {{
-                                    x: 0,
-                                    opacity: 100,
-                                    transition: {
-                                        type: spring,
-                                        stiffness: 380,
-                                        damping: 30,
-                                        mass: 1
-                                    }
-                                }}
-                                exit={{
-                                    x: 10,
-                                    opacity: 0,
-                                    transition: {
-                                        type: spring,
-                                        stiffness: 400,
-                                        damping: 30,
-                                        mass: 1
-                                    }
-                                }}
-                            >
-                                <div className="flex items-center gap-2.5">
-                                    <div style={{backgroundImage: `url(${userData.userImages})`, backgroundPosition: "center", backgroundRepeat: "no-repeat", backgroundSize: "contain"}} className="w-10 h-10 rounded-full"></div>
-                                    <div>
-                                        <h3 className="font-medium text-[15px]">{userData.username}</h3>
-                                        <p className="font-medium text-xs">{userData.email}</p>
-                                    </div>
-                                </div>
-                                <div className="flex flex-col gap-2 w-full">
-                                    <div className="flex items-center gap-2.5 bg-green-500/20 rounded-full py-2 px-4 w-full">
-                                        <FontAwesomeIcon icon={faSun}/>
-                                        <p className="font-medium text-[15px]">Switch theme</p>
-                                    </div>
-                                    <div className="flex items-center gap-2.5 bg-green-500/20 rounded-full py-2 px-4 w-full">
-                                        <FontAwesomeIcon icon={faUserPen} />
-                                        <p className="font-medium text-[15px]">Edit Profile</p>
-                                    </div>
-                                    <div className="flex items-center gap-2.5 bg-green-500/20 rounded-full py-2 px-4 w-full">
-                                        <FontAwesomeIcon icon={faLock} />
-                                        <p className="font-medium text-[15px]">Change Password</p>
-                                    </div>
-                                    <div className="flex items-center gap-2.5 bg-green-500/20 rounded-full py-2 px-4 w-full">
-                                        <FontAwesomeIcon icon={faArrowRightFromBracket} />
-                                        <p className="font-medium text-[15px]">Signout</p>
-                                    </div>
-                                </div>
-                            </motion.div>}
-                        </AnimatePresence>
-                    </motion.div>
-                </div>
-            </div>
+            <TrackerNavbar setIsOut={setIsOut} isOut={isOut} backLink="/app" trackerName="My New Tracker" />
             <AnimatePresence>
                 {!isOut && <motion.div
                     key={"main"}
@@ -242,9 +121,9 @@ export function Tracker(): JSX.Element {
                         <div className="flex justify-between w-full gap-5">
                             <Dialog>
                                 <DialogTrigger className="flex-1 w-full">
-                                    <Button className="flex-1 w-full bg-white border-2 border-green-300 text-neutral-800" onClick={() => setPendapatanUrl(null)} >+ Pendapatan</Button>
+                                    <motion.div whileTap={{ scale: 0.95 }}><Button className="flex-1 w-full bg-white border-2 border-green-300 text-neutral-800" onClick={() => setPendapatanUrl(null)} >+ Pendapatan</Button></motion.div>
                                 </DialogTrigger>
-                                <DialogContent className="flex flex-col">
+                                <DialogContent className="flex flex-col shadow-green-300/40">
                                     <DialogTitle className="font-medium">Pendapatan</DialogTitle>
                                     <DialogDescription className="flex flex-col gap-4">
                                         <div className="flex flex-col gap-2">
@@ -268,15 +147,15 @@ export function Tracker(): JSX.Element {
                                             </div>
                                             <img src={pendapatanUrl ? pendapatanUrl : undefined} alt="" className="w-[50%] max-h-40 rounded-md" />
                                         </div>
-                                        <Button>Tambah</Button>
+                                        <Button className="bg-transparent border-2 border-green-300 text-black font-[Inter] font-semibold">Tambah</Button>
                                     </DialogDescription>
                                 </DialogContent>
                             </Dialog>
                             <Dialog>
                                 <DialogTrigger className="flex-1 w-full">
-                                    <Button className="flex-1 w-full bg-white border-2 border-red-300 text-neutral-800">- Pengeluaran</Button>
+                                    <motion.div whileTap={{ scale: 0.95 }}><Button className="flex-1 w-full bg-white border-2 border-red-300 text-neutral-800">- Pengeluaran</Button></motion.div>
                                 </DialogTrigger>
-                                <DialogContent className="flex flex-col">
+                                <DialogContent className="flex flex-col shadow-red-300/40">
                                     <DialogTitle className="font-medium">Pengeluaran</DialogTitle>
                                     <DialogDescription className="flex flex-col gap-4">
                                         <div className="flex flex-col gap-2">
@@ -300,7 +179,7 @@ export function Tracker(): JSX.Element {
                                             </div>
                                             <img src={pengeluaranUrl ? pengeluaranUrl : undefined} alt="" className="w-[50%] max-h-40 rounded-md" />
                                         </div>
-                                        <Button>Tambah</Button>
+                                        <Button className="bg-transparent border-2 border-red-300 text-black font-[Inter] font-semibold">Tambah</Button>
                                     </DialogDescription>
                                 </DialogContent>
                             </Dialog>
@@ -311,7 +190,7 @@ export function Tracker(): JSX.Element {
                             <div className="flex flex-col w-full">
                                 <div className="flex justify-between items-center w-full">
                                     <p className="font-medium text-base">Riwayat Pengeluaran</p>
-                                    <Button className="bg-white border-2 border-neutral-200 text-neutral-800 font-medium h-8">Lihat</Button>
+                                    <Button onClick={() => {setIsOut(true); setTimeout(() => window.location.href = "/app/tracker/history", 400)}} className="bg-white border-2 border-neutral-200 text-neutral-800 font-medium h-8">Lihat</Button>
                                 </div>
                                 <div className="flex justify-between items-center border-b py-3">
                                     <div className="flex flex-col">
@@ -344,7 +223,7 @@ export function Tracker(): JSX.Element {
                             <div className="flex flex-col w-full gap-4 h-full">
                                 <div className="flex justify-between items-center w-full">
                                     <p className="font-medium text-base">Laporan & Insight</p>
-                                    <Button className="bg-white border-2 border-neutral-200 text-neutral-800 font-medium h-8">Lihat</Button>
+                                    <Button onClick={() => {setIsOut(true); setTimeout(() => window.location.href = "/app/tracker/report", 400)}} className="bg-white border-2 border-neutral-200 text-neutral-800 font-medium h-8">Lihat</Button>
                                 </div>
                                 <div className="flex flex-row gap-2 h-full">
                                     <div className="flex flex-row gap-2 overflow-hidden w-full">
