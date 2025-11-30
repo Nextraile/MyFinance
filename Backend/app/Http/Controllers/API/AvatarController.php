@@ -65,10 +65,10 @@ class AvatarController extends Controller
                 $user->save();
             }
 
+            return ResponseHelper::successResponse(null, 'Avatar deleted successfully.');
+            
         } catch (\Exception $e) {
             return ResponseHelper::logAndErrorResponse($e, 'Avatar delete error', 'Failed to delete avatar.');
         }
-        
-        return ResponseHelper::successResponse(null, 'Avatar deleted successfully.');
     }  
 }

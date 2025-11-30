@@ -19,8 +19,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout'])->middleware('throttle:api')->name('logout');
     });
 
-    // Route::apiResource('trackers', TrackerController::class)->middleware('throttle:api');
+    Route::apiResource('trackers', TrackerController::class)->middleware('throttle:api');
     // Route::apiResource('transactions', TransactionController::class)->middleware('throttle:api');
+
+    Route::prefix('search')->group(function () {
+        Route::get('/trackers', [TrackerController::class, 'search'])->middleware('throttle:api')->name('trackers-search');
+        Route::get('/transactions', [TransactionController::class, 'search'])->middleware('throttle:api')->name('transactions-search');
+    });
 
     Route::prefix('user')->group(function () {
         Route::get('/profile', [ProfileController::class, 'get'])->middleware('throttle:api')->name('profile-fetch');
