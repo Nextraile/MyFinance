@@ -1,7 +1,7 @@
 import { useEffect, useState, type JSX } from "react";
 import { AnimatePresence, motion, spring } from "motion/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft, faArrowRightFromBracket, faFilter, faLock, faSun, faUserPen } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faArrowRightFromBracket, faFilter, faLock, faQuestion, faSun, faUserPen } from "@fortawesome/free-solid-svg-icons";
 import { userData } from "@/lib/userData";
 import { XIcon } from "lucide-react";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
@@ -150,6 +150,10 @@ export function TrackerHistory(): JSX.Element {
                         </DropdownMenu>
                     </div>
                     <div className="w-full flex flex-col gap-2 mb-15">
+                        {data.length === 0 && <div className="flex flex-col items-center gap-5 justify-center h-75 px-5">
+                            <FontAwesomeIcon icon={faQuestion} className="text-7xl text-black/40" />
+                            <p className="text-center font-medium text-base text-black/50">Oops... Your data looks empty <br /> <span className="font-normal">Try changing the filter or adding some data.</span></p>
+                        </div>}
                         {data.map(item => (
                             <Dialog>
                                 <DialogTrigger className="flex w-full bg-white rounded-md">
@@ -207,27 +211,29 @@ export function TrackerHistory(): JSX.Element {
                         }
                     }}
                 >
-                    <Pagination className="relative">
-                    <PaginationContent className="relative">
-                        <PaginationItem onClick={() => changePage("first")} className={`${page === 1 && "opacity-0"}`}>
-                            <PaginationPrevious />
-                        </PaginationItem>
-                        <PaginationItem onClick={() => changePage("down")} className={`${page === 1 && "opacity-0"}`}>
-                            <PaginationLink>1</PaginationLink>
-                        </PaginationItem>
-                        <PaginationItem>
-                            <PaginationLink isActive className="bg-green-400/60 text-white">
-                                {page}
-                            </PaginationLink>
-                        </PaginationItem>
-                        <PaginationItem onClick={() => changePage("up")} className={`${page === lastPage && "opacity-0"}`}>
-                            <PaginationLink>{page + 1}</PaginationLink>
-                        </PaginationItem>
-                        <PaginationItem onClick={() => changePage("last")} className={`${page === lastPage && "opacity-0"}`}>
-                            <PaginationNext />
-                        </PaginationItem>
-                    </PaginationContent>
-                    </Pagination>
+                    {data.length > 0 &&                     
+                        <Pagination className="relative">
+                        <PaginationContent className="relative">
+                            <PaginationItem onClick={() => changePage("first")} className={`${page === 1 && "opacity-0"}`}>
+                                <PaginationPrevious />
+                            </PaginationItem>
+                            <PaginationItem onClick={() => changePage("down")} className={`${page === 1 && "opacity-0"}`}>
+                                <PaginationLink>1</PaginationLink>
+                            </PaginationItem>
+                            <PaginationItem>
+                                <PaginationLink isActive className="bg-green-400/60 text-white">
+                                    {page}
+                                </PaginationLink>
+                            </PaginationItem>
+                            <PaginationItem onClick={() => changePage("up")} className={`${page === lastPage && "opacity-0"}`}>
+                                <PaginationLink>{page + 1}</PaginationLink>
+                            </PaginationItem>
+                            <PaginationItem onClick={() => changePage("last")} className={`${page === lastPage && "opacity-0"}`}>
+                                <PaginationNext />
+                            </PaginationItem>
+                        </PaginationContent>
+                        </Pagination>
+                    }
                 </motion.div>}
             </AnimatePresence>
         </section>

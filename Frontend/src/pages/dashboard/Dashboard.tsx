@@ -177,12 +177,15 @@ export function Dashboard(): JSX.Element {
                             opacity: 0
                         }}
                     >
-                        <div className="flex items-center flex-1 bg-white/10 backdrop-blur-[2px]">
+                        {session === "cloud" && <div className="flex items-center flex-1 bg-white/10 backdrop-blur-[2px]">
                             <label htmlFor="search" className="absolute pl-4 z-1">
                                 <FontAwesomeIcon icon={faMagnifyingGlass} className="text-neutral-700" />
                             </label>
                             <Input id="search" type="text" className="rounded-full h-10 pl-11 bg-white/50 focus:bg-neutral-50/80 backdrop-blur-[2px] backdrop-grayscale-50" placeholder="Search MyTracker" />
-                        </div>
+                        </div>}
+                        {session === "local" && <div className="flex items-center flex-1 bg-white/10 backdrop-blur-[2px]">
+                            <Input id="search" disabled type="text" className="rounded-full h-10 pl-11bg-white/50 focus:bg-neutral-50/80 backdrop-blur-[2px] backdrop-grayscale-50" placeholder="Search mode disabled in local account" />
+                        </div>}
                         <motion.div>
                             <AnimatePresence mode="popLayout">
                                 {!isAccountOpen &&

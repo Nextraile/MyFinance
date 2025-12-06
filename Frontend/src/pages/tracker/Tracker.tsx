@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type JSX } from "react";
 import { AnimatePresence, motion, spring } from "motion/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft, faArrowRightFromBracket, faLock, faMagnifyingGlass, faSun, faUserPen, faWarning } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faArrowRightFromBracket, faLock, faMagnifyingGlass, faQuestion, faSun, faUserPen, faWarning } from "@fortawesome/free-solid-svg-icons";
 import { Input } from "@/components/ui/input";
 import { userData } from "@/lib/userData";
 import { Files, XIcon } from "lucide-react";
@@ -231,10 +231,6 @@ export function Tracker(): JSX.Element {
                     cuttedData = data.slice(0, 7)
                     console.log("sliced data")
                     console.log("cuttedData", cuttedData, dataLength)
-                } else if(data.length <= 1) {
-                    console.log("cannot produce chart")
-                    setChart([])
-                    return
                 } else {
                     console.log("no data sliced")
                     cuttedData = sortedData
@@ -430,6 +426,9 @@ export function Tracker(): JSX.Element {
                                     <p className="font-medium text-base">Riwayat Transaksi</p>
                                     <Button onClick={() => { setIsOut(true); setTimeout(() => { window.location.href = `/app/tracker/history/${trackerData?.id}`; }, 400); }} className="bg-white border-2 border-neutral-200 text-neutral-800 font-medium h-8">Lihat</Button>
                                 </div>
+                                {historyBalance.length === 0 && <div className="flex flex-col justify-center items-center text-center h-35">
+                                    <p className="text-center font-medium text-base text-black/50">You have very few transactions <br /> <span className="font-normal">Try adding it and see your history here.</span></p>                                
+                                </div>}
                                 {historyBalance && historyBalance.map((item) => (
                                     <div className="flex justify-between items-center border-b py-3">
                                         <div className="flex flex-col">

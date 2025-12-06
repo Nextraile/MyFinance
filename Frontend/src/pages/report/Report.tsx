@@ -1,7 +1,7 @@
 import { useEffect, useState, type JSX } from "react";
 import { AnimatePresence, motion, MotionConfig, spring, useScroll } from "motion/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft, faArrowRightFromBracket, faDollar, faFilter, faLock, faSun, faTriangleExclamation, faUserPen } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faArrowRightFromBracket, faDollar, faFilter, faLock, faMinus, faQuestion, faSadTear, faSun, faTriangleExclamation, faUserPen } from "@fortawesome/free-solid-svg-icons";
 import { userData } from "@/lib/userData";
 import { XIcon } from "lucide-react";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
@@ -12,6 +12,7 @@ import { TrackerNavbar } from "@/components/TrackerNavbar";
 import { useParams } from "react-router-dom";
 import { DBgetalltransactions, DBgetonetracker } from "@/lib/db";
 import { parse } from "date-fns";
+import { faSadCry } from "@fortawesome/free-regular-svg-icons";
 
 export function Report(): JSX.Element {
     const { id } = useParams()
@@ -86,11 +87,11 @@ export function Report(): JSX.Element {
 
             // calcute income message
             let incomeComparationPercentage = Math.round((sevenDaysIncome - sevenDaysBeforeIncome) / sevenDaysBeforeIncome * 100)
-            if(incomeComparationPercentage === Infinity) incomeComparationPercentage = 100
+            if(incomeComparationPercentage === Infinity || Number.isNaN(incomeComparationPercentage)) incomeComparationPercentage = NaN
 
             // calcute income message
             let outcomeComparationPercentage = Math.round((SevenDaysOutcome - sevenDaysBeforeOutcome) / sevenDaysBeforeOutcome * 100)
-            if(outcomeComparationPercentage === Infinity) outcomeComparationPercentage = 100
+            if(outcomeComparationPercentage === Infinity || Number.isNaN(outcomeComparationPercentage)) outcomeComparationPercentage = NaN
 
             // making chart data
             let chartNowBalance = 0
@@ -150,11 +151,11 @@ export function Report(): JSX.Element {
             
             // calcute income message
             let incomeComparationPercentage = Math.round((thirtyDaysIncome - thirtyDaysBeforeIncome) / thirtyDaysBeforeIncome * 100)
-            if(incomeComparationPercentage === Infinity) incomeComparationPercentage = 100
+            if(incomeComparationPercentage === Infinity || Number.isNaN(incomeComparationPercentage)) incomeComparationPercentage = NaN
 
             // calcute income message
             let outcomeComparationPercentage = Math.round((thirtyDaysOutcome - thirtyDaysBeforeOutcome) / thirtyDaysBeforeOutcome * 100)
-            if(outcomeComparationPercentage === Infinity) outcomeComparationPercentage = 100
+            if(outcomeComparationPercentage === Infinity || Number.isNaN(incomeComparationPercentage)) outcomeComparationPercentage = NaN
 
             // making chart data
             let chartNowBalance = 0
@@ -214,11 +215,11 @@ export function Report(): JSX.Element {
             
             // calcute income message
             let incomeComparationPercentage = Math.round((oneYearIncome - oneYearBeforeIncome) / oneYearBeforeIncome * 100)
-            if(incomeComparationPercentage === Infinity) incomeComparationPercentage = 100
+            if(incomeComparationPercentage === Infinity || Number.isNaN(incomeComparationPercentage)) incomeComparationPercentage = NaN
 
             // calcute income message
             let outcomeComparationPercentage = Math.round((oneYearOutcome - oneYearBeforeOutcome) / oneYearBeforeOutcome * 100)
-            if(outcomeComparationPercentage === Infinity) outcomeComparationPercentage = 100
+            if(outcomeComparationPercentage === Infinity || Number.isNaN(incomeComparationPercentage)) outcomeComparationPercentage = NaN
 
             // making chart data
             let chartNowBalance = 0
@@ -249,7 +250,7 @@ export function Report(): JSX.Element {
     }
 
     const setHistory = () => {
-        const size = 10
+        const size = 5
         const offset = (page - 1) * size
 
         const uncleanedData: any[] = (displayData.transactionsHistory).sort((a, b) => b.date - a.date)
@@ -259,7 +260,7 @@ export function Report(): JSX.Element {
             if(item.image) {
                 const image = item.image
                 const url = URL.createObjectURL(image)
-                item.image = url
+                item.imageUrl = url
             }
             cleanedData.push(item)
         })
@@ -292,10 +293,13 @@ export function Report(): JSX.Element {
         if(range === 7) parse7Days()
         if(range === 30) parse30Days()
         if(range === 365) parse1Year()
+
+        setPage(1)
     }, [range, data])
 
     useEffect(() => {
         setHistory()
+        console.log(displayData)
     }, [displayData, page])
 
     const changePage = (direction: "up" | "down" | "first" | "last") => {
@@ -304,14 +308,6 @@ export function Report(): JSX.Element {
         if(direction === "down" && page !== 1) setPage(prev => prev -= 1) 
         if(direction === "up" && page !== lastPage) setPage(prev => prev += 1) 
     }
-
-    const chartData = [
-    { date: "11/2/25", desktop: 2200700 },
-    { date: "11/3/25", desktop: 2300750 },
-    { date: "11/2/25", desktop: 2320000 },
-    { date: "11/2/25", desktop: 2100000 },
-    { date: "11/2/25", desktop: 1950000 },
-    ]
     
     const chartConfig = {
     desktop: {
@@ -368,29 +364,43 @@ export function Report(): JSX.Element {
                             </button>
                         ))}
                     </div>
-                    <div className="flex flex-col items-center w-[87%] gap-3">
+                    {historyData.length >= 3 && <div className="flex flex-col items-center w-[87%] gap-3">
                         <div className="flex justify-between w-full">
                             <h3 className="text-sm font-regular">Laporan & Insight</h3>
                         </div>
                         <div className="w-full flex flex-col gap-3.5">
-                            <div className="bg-white flex flex-col w-full justify-center items-start p-4 rounded-xl">
+                            {/* <div className="bg-white flex flex-col w-full justify-center items-start p-4 rounded-xl">
                                 <p className="font-normal text-base">Saldo Akhir</p>
                                 <p className="font-medium text-lg">Rp.3.796.105</p>
-                            </div>
+                            </div> */}
                             <div className="flex flex-row gap-3.5">
                                 <div className="bg-white flex flex-col w-full justify-center items-start p-4 rounded-xl gap-1 h-fit">
                                     <div className="flex flex-col">
                                         <p className="font-normal text-base">Pemasukkan</p>
-                                        <p className="font-medium text-lg">Rp.406.105</p>
+                                        <p className="font-medium text-lg">Rp.{displayData.income.toLocaleString("ID")}</p>
                                     </div>
-                                    <p className="text-sm font-normal text-neutral-600">- 12% dari bulan lalu</p>
+                                    {Number.isNaN(displayData.incomePercentage) && null}
+                                    {!Number.isNaN(displayData.incomePercentage) && 
+                                        <div>
+                                            <p className="text-sm font-normal text-neutral-600">
+                                                {displayData.incomePercentage}% dari {range === 7 ? "minggu lalu" : range === 30 ? "bulan lalu" : "tahun lalu"}
+                                            </p>
+                                        </div>
+                                    }
                                 </div>
                                 <div className="bg-white flex flex-col w-full justify-center items-start p-4 rounded-xl gap-1 h-fit">
                                     <div className="flex flex-col">
                                         <p className="font-normal text-base">Pengeluaran</p>
-                                        <p className="font-medium text-lg">Rp.738.067</p>
+                                        <p className="font-medium text-lg">Rp.{displayData.outcome.toLocaleString("ID")}</p>
                                     </div>
-                                    <p className="text-sm font-normal text-neutral-600">+ 6% dari bulan lalu</p>
+                                    {Number.isNaN(displayData.outcomePercentage) && null}
+                                    {!Number.isNaN(displayData.outcomePercentage) && 
+                                        <div>
+                                            <p className="text-sm font-normal text-neutral-600">
+                                                {displayData.outcomePercentage}% dari {range === 7 ? "minggu lalu" : range === 30 ? "bulan lalu" : "tahun lalu"}
+                                            </p>
+                                        </div>
+                                    }                                
                                 </div>
                             </div>
                         </div>
@@ -398,7 +408,7 @@ export function Report(): JSX.Element {
                             <ChartContainer config={chartConfig}>
                                 <AreaChart
                                     accessibilityLayer
-                                    data={chartData}
+                                    data={displayData.chartData}
                                     margin={{
                                     left: 10,
                                     right: 10,
@@ -410,13 +420,15 @@ export function Report(): JSX.Element {
                                     <CartesianGrid vertical={false} />
                                     <XAxis
                                         dataKey="date"
-                                        tickLine={false}
-                                        axisLine={false}
+                                        tickLine={true}
+                                        axisLine={true}
                                         tickMargin={6}
-                                        tickFormatter={value => value}
-                                    />
+                                        tickFormatter={value => {
+                                        const d = new Date(value)
+                                        return d.toLocaleDateString("id-ID", { day: "2-digit", month: "2-digit" })
+                                        }}                                    />
                                     <YAxis
-                                        domain={['dataMin - 50000', 'dataMax + 50000']}
+                                        domain={['dataMin', 'dataMax']}
                                         tickLine={false}
                                         axisLine={false}
                                         tick={false}
@@ -427,7 +439,7 @@ export function Report(): JSX.Element {
                                         content={<ChartTooltipContent indicator="line" />}
                                     />
                                     <Area
-                                        dataKey="desktop"
+                                        dataKey="balance"
                                         type='natural'
                                         fill="#16E716"
                                         fillOpacity={0.2}
@@ -436,88 +448,54 @@ export function Report(): JSX.Element {
                                 </AreaChart>
                             </ChartContainer>
                             <div className="flex flex-col gap-3 px-3">
-                                <div className="flex justify-start items-center gap-2">
-                                    <FontAwesomeIcon icon={faDollar} className="text-green-600/70" />
-                                    <p className="text-sm font-normal text-neutral-700">Pemasukkan terbanyak Rp.12.000 di hari sabtu</p>
-                                </div>
-                                <div className="flex justify-start items-center gap-2">
-                                    <FontAwesomeIcon icon={faTriangleExclamation} className="text-red-500/80" />
-                                    <p className="text-sm font-normal text-neutral-700">Pengeluaran terbanyak ada di makanan</p>
-                                </div>
-                                <div className="flex justify-start items-center gap-2">
-                                    <FontAwesomeIcon icon={faTriangleExclamation} className="text-red-500/80" />
-                                    <p className="text-sm font-normal text-neutral-700">Pengeluaran terbanyak Rp.35.000 di hari rabu</p>
-                                </div>
+                                {displayData.highestIncome &&                                
+                                    <div className="flex justify-start items-center gap-2">
+                                        <FontAwesomeIcon icon={faDollar} className="text-green-600/70" />
+                                        <p className="text-sm font-normal text-neutral-700">Pemasukkan terbesarmu {range === 7 ? "minggu ini" : range === 30 ? "bulan ini" : "tahun ini"} adalah Rp.{displayData.highestIncome?.toLocaleString("ID")}</p>
+                                    </div>
+                                }
+                                {displayData.highestOutcome &&                                
+                                    <div className="flex justify-start items-center gap-2">
+                                        <FontAwesomeIcon icon={faTriangleExclamation} className="text-red-500/80" />
+                                        <p className="text-sm font-normal text-neutral-700">Pengeluaran terbesarmu {range === 7 ? "minggu ini" : range === 30 ? "bulan ini" : "tahun ini"} adalah Rp.{displayData.highestOutcome?.toLocaleString("ID")}</p>
+                                    </div>
+                                }
                             </div>
                         </div>
                         <div className="w-full flex flex-col gap-2 mt-2">
-                            <h3 className="text-sm font-regular">Riwayat dalam rentang 7 hari</h3>
-                            <Dialog>
-                                <DialogTrigger className="flex w-full bg-white rounded-md">
-                                    <div className="w-20 bg-neutral-400 rounded-l-md" />
-                                    <div className="flex w-full text-start justify-between flex-1 p-3">
-                                        <div className="flex flex-col w-full pb-5 gap-0.5">
-                                            <div className="flex w-full flex-col flex-1">
-                                                <p className="text-sm font-normal">Gajian</p>
-                                                <p className="font-semibold text-base">+ Rp. 4.200.000</p>
+                            <h3 className="text-sm font-regular">Riwayat dalam rentang {range === 7 ? "7 hari" : range === 30 ? "1 bulan" : "1 tahun"}</h3>
+                            {historyData.map(item => (
+                                <Dialog>
+                                    <DialogTrigger className="flex w-full bg-white rounded-md">
+                                        {item.image && <div style={{backgroundImage: `url(${item.imageUrl})`, backgroundPosition: "center", backgroundRepeat: "no-repeat", backgroundSize: "cover"}} className="w-20 bg-neutral-400 rounded-l-md" />}
+                                        <div className="flex w-full text-start justify-between flex-1 p-3">
+                                            <div className="flex flex-col w-full pb-5 gap-0.5">
+                                                <div className="flex w-full flex-col flex-1">
+                                                    <p className="text-sm font-normal">{item.name}</p>
+                                                    <p className="font-semibold text-base">{item.type === "income" ? "+ " : "- "} Rp.{item.income.toLocaleString("iD")}</p>
+                                                </div>
                                             </div>
+                                            <div className="self-end flex-1 font-normal text-xs text-neutral-500">{item.date.getDay()}-{item.date.getMonth()}-{item.date.getFullYear()}</div>
                                         </div>
-                                        <div className="self-end flex-1 font-normal text-xs text-neutral-500">11/4/25</div>
-                                    </div>
-                                </DialogTrigger>
-                                <DialogContent className="w-full flex flex-col items-center">
-                                    <div className="w-[calc(100vw-70px)] h-70 sm:w-full bg-neutral-300" />
-                                    <div className="flex w-full flex-row justify-between items-end">
-                                        <h4 className="font-medium text-xl">Gajian</h4>
-                                        <p className="font-semibold text-2xl text-neutral-600">+ Rp. 4.200.000</p>
-                                    </div>
-                                    <p className="text-sm font-normal text-neutral-400 self-end">Kamis, 11 October 2025</p>
-                                </DialogContent>
-                            </Dialog>
-                            <Dialog>
-                                <DialogTrigger className="flex w-full bg-white rounded-md">
-                                    <div className="w-20 bg-neutral-400 rounded-l-md" />
-                                    <div className="flex w-full text-start justify-between flex-1 p-3">
-                                        <div className="flex flex-col w-full pb-5 gap-0.5">
-                                            <div className="flex w-full flex-col flex-1">
-                                                <p className="text-sm font-normal">Jajan</p>
-                                                <p className="font-semibold text-base">- Rp. 20.000</p>
-                                            </div>
-                                            <p className="font-normal w-full text-sm text-neutral-700">Ini contoh deskrips..</p>
+                                    </DialogTrigger>
+                                    <DialogContent className="w-full flex flex-col items-center">
+                                        {item.image && <div style={{backgroundImage: `url(${item.imageUrl})`, backgroundPosition: "center", backgroundRepeat: "no-repeat", backgroundSize: "cover"}} className="w-[calc(100vw-70px)] h-70 sm:w-full bg-neutral-300" />}
+                                        <div className="flex w-full flex-row justify-between items-end">
+                                            <h4 className="font-medium text-xl">{item.name}</h4>
+                                            <p className="font-semibold text-2xl text-neutral-600">{item.type === "income" ? "+ " : "- "} Rp.{item.income.toLocaleString("iD")}</p>
                                         </div>
-                                        <div className="self-end flex-1 font-normal text-xs text-neutral-500">11/2/25</div>
-                                    </div>
-                                </DialogTrigger>
-                                <DialogContent className="w-full flex flex-col items-center">
-                                    <div className="w-[calc(100vw-70px)] h-70 sm:w-full bg-neutral-300" />
-                                    <div className="flex w-full flex-row justify-between items-end">
-                                        <h4 className="font-medium text-xl">Jajan</h4>
-                                        <p className="font-semibold text-2xl text-neutral-600">- Rp.100.000</p>
-                                    </div>
-                                    <p className="text-base font-normal">Ini contoh deskripsi yang sangat sangat panjaang sekali. Lorem dolor sit amet.</p>
-                                    <p className="text-sm font-normal text-neutral-400 self-end">Kamis, 11 October 2025</p>
-                                </DialogContent>
-                            </Dialog>
-                            <Dialog>
-                                <DialogTrigger className="flex w-full bg-white rounded-md">
-                                    <div className="flex w-full text-start justify-between flex-1 p-3">
-                                        <div className="flex flex-col w-full pb-5 gap-0.5">
-                                            <div className="flex w-full flex-col flex-1">
-                                                <p className="text-sm font-normal shrink">Bayar sewaan</p>
-                                                <p className="font-semibold text-base shrink-0 ">- Rp.2.676.000</p>
-                                            </div>
-                                        </div>
-                                        <div className="self-end flex-1 font-normal text-xs text-neutral-500">11/2/25</div>
-                                    </div>
-                                </DialogTrigger>
-                                <DialogContent className="w-full flex flex-col items-center">
-                                    <div className="flex w-full flex-row justify-between items-end">
-                                        <h4 className="font-medium text-xl">Bayar Sewaan</h4>
-                                        <p className="font-semibold text-2xl text-neutral-600">- Rp.2.676.000</p>
-                                    </div>
-                                    <p className="text-sm font-normal text-neutral-400 self-end">Kamis, 11 October 2025</p>
-                                </DialogContent>
-                            </Dialog>
+                                        <p className="text-base font-normal self-start -mt-2">{item.desc}</p>
+                                        <p className="text-sm font-normal text-neutral-400 self-end">
+                                            {item.date.toLocaleDateString("ID", {
+                                                weekday: "long",
+                                                day: "numeric",
+                                                month: "long",
+                                                year: "numeric"
+                                            })}
+                                        </p>
+                                    </DialogContent>
+                                </Dialog>
+                            ))}
                             <motion.div
                                 className="w-full bg-background-primary flex justify-center items-center h-15"
                             >
@@ -544,7 +522,11 @@ export function Report(): JSX.Element {
                             </Pagination>
                             </motion.div>
                         </div>
-                    </div>
+                    </div>}
+                    {historyData.length < 3 && <div className="flex flex-col items-center gap-5 justify-center h-50 px-5">
+                        <FontAwesomeIcon icon={faQuestion} className="text-7xl text-black/40" />
+                        <p className="text-center font-medium text-base text-black/50">You have very few transactions <br /> <span className="font-normal">Unfortunately, we cannot generate your report.</span></p>
+                    </div>}
                 </motion.div>}
             </AnimatePresence>
         </section>
