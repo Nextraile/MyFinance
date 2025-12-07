@@ -48,21 +48,9 @@ class StoreTransactionRequest extends FormRequest
 
     protected function prepareForValidation()
     {
-        if ($this->hasFile('image')) {
-            $file = $this->file('image');
-            $name = time() . '_' . preg_replace('/\s+/', '_', $file->getClientOriginalName());
-            $file->storeAs('transactions/'.'user-id_'.$this->user()->id.'/tracker-id_'.$this->route('tracker')->id, $name, 'public');
-            $filePath = $file->storeAs('transactions/'.'user-id_'.$this->user()->id.'/tracker-id_'.$this->route('tracker')->id, $name, 'public');
-            $path = url(Storage::url($filePath));
-            $image = 'transactions/'.'user-id_'.$this->user()->id. '/tracker-id_' . $this->route('tracker')->id . '/' . $path;
-        } else {
-            $image = null;
-        }
-
         $this->merge([
             'user_id' => $this->user()->id,
             'tracker_id' => $this->route('tracker')->id,
-            'image' => $image,
         ]);
     }
     /**
