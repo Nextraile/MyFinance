@@ -97,12 +97,13 @@ class TransactionController extends Controller
         } else {
             $image = null;
         }
-
-            $transaction['image'] = $image;
+            $transaction['image'] = $filePath;
 
             DB::transaction(function () use ($tracker, &$transaction) {
                 return $tracker->transactions()->create($transaction);
             });
+            
+            $transaction['image'] = $image;
 
             return ResponseHelper::createdResponse(
                 ['transaction' => $transaction],
