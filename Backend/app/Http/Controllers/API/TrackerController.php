@@ -5,6 +5,8 @@ namespace App\Http\Controllers\API;
 use App\Helpers\ResponseHelper;
 use App\Http\Requests\DeleteTrackerRequest;
 use App\Http\Requests\GetAllTrackersRequest;
+use App\Http\Requests\GetAllTransactionsByTracker;
+use App\Http\Requests\GetAllTransactionsByTrackerRequest;
 use App\Http\Requests\GetTrackerRequest;
 use App\Http\Requests\GetTrackersBySearchRequest;
 use App\Http\Requests\StoreTrackerRequest;
@@ -86,6 +88,24 @@ class TrackerController extends Controller
 
         } catch (\Exception $e) {
             return ResponseHelper::logAndErrorResponse($e, 'Tracker show error', 'Failed to fetch tracker.');
+        }
+    }
+
+    public function allTransactions(GetAllTransactionsByTrackerRequest $request, Tracker $tracker)
+    {
+        try {
+            $tracker = $tracker->with(['transactions' => function ($query) {
+                $query->latest();
+            }])->findOrFail($tracker->id);
+
+            $tracker->current_balance = $tracker->current_balance;
+
+            return ResponseHelper::successResponse(
+                ['tracker' => $tracker],
+                'Tracker transactions fetched successfully.'
+            );
+        } catch (\Exception $e) {
+            return ResponseHelper::logAndErrorResponse($e, 'Tracker transactions fetch error', 'Failed to fetch tracker transactions.');
         }
     }
 

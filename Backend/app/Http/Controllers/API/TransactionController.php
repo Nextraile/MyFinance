@@ -179,11 +179,7 @@ class TransactionController extends Controller
     {
         try {
             if ($transaction->user_id !== $request->user()->id) {
-                return response()->json([
-                    'response_code' => Response::HTTP_FORBIDDEN,
-                    'status' => 'error',
-                    'message' => 'Access denied'
-                ], Response::HTTP_FORBIDDEN);
+                return ResponseHelper::forbiddenResponse('Access denied.');
             }
 
             if ($request->has('tracker_id')) {
@@ -194,21 +190,13 @@ class TransactionController extends Controller
             
             $transaction->update($request->validated());
 
-            return response()->json([
-                'response_code' => Response::HTTP_OK,
-                'status' => 'success',
-                'message' => 'Transaction updated successfully',
-                'data' => $transaction->load('tracker:id,name')
-            ], Response::HTTP_OK);
+            return ResponseHelper::successResponse(
+                ['transaction' => $transaction],
+                'Transaction updated successfully.'
+            );
 
         } catch (\Exception $e) {
-            Log::error('Transaction update error: ' . $e->getMessage());
-
-            return response()->json([
-                'response_code' => Response::HTTP_INTERNAL_SERVER_ERROR,
-                'status' => 'error',
-                'message' => 'Failed to update transaction'
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return ResponseHelper::logAndErrorResponse($e, 'Transaction update error', 'Failed to update transaction.');
         }
     }
 
@@ -219,29 +207,17 @@ class TransactionController extends Controller
     {
         try {
             if ($transaction->user_id !== $request->user()->id) {
-                return response()->json([
-                    'response_code' => Response::HTTP_FORBIDDEN,
-                    'status' => 'error',
-                    'message' => 'Access denied'
-                ], Response::HTTP_FORBIDDEN);
+                return ResponseHelper::forbiddenResponse('Access denied.');
             }
 
             $transaction->delete();
 
-            return response()->json([
-                'response_code' => Response::HTTP_OK,
-                'status' => 'success',
-                'message' => 'Transaction deleted successfully.'
-            ], Response::HTTP_OK);
-
+            return ResponseHelper::successResponse(
+                ['transaction' => $transaction],
+                'Transaction deleted successfully.'
+            );
         } catch (\Exception $e) {
-            Log::error('Transaction delete error: ' . $e->getMessage());
-
-            return response()->json([
-                'response_code' => Response::HTTP_INTERNAL_SERVER_ERROR,
-                'status' => 'error',
-                'message' => 'Failed to delete transaction.'
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return ResponseHelper::logAndErrorResponse($e, 'Transaction delete error', 'Failed to delete transaction.');
         }
     }
 
