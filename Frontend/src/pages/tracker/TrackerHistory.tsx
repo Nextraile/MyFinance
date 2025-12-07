@@ -76,8 +76,15 @@ export function TrackerHistory(): JSX.Element {
 
     const cloudGetTransactions = async () => {
         console.log("get transactions triggered!")
+
+        const showBoth = showPlus && showwMinus
+        const minusOnly = showwMinus && !showPlus
+        const plusOnly = !showwMinus && showPlus
+        const type = showBoth ? "both" : minusOnly ? "expense" : plusOnly ? "income" : ""
+
         try {
-            const res = await axios.get(`${ApiUrl}/api/trackers/${id}/paginate/transactions?page=${page}`, {
+            console.log(id, page, direction, type)
+            const res = await axios.get(`${ApiUrl}/api/trackers/${id}/paginate/transactions?page=${page}&per_page=10&order=${direction}&type=${type}`, {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("Authorization")}`
                 }

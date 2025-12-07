@@ -13,6 +13,8 @@ import { useParams } from "react-router-dom";
 import { DBgetalltransactions, DBgetonetracker } from "@/lib/db";
 import { parse } from "date-fns";
 import { faSadCry } from "@fortawesome/free-regular-svg-icons";
+import axios from "axios";
+import { ApiUrl } from "@/lib/variable";
 
 export function Report(): JSX.Element {
     const { id } = useParams()
@@ -41,11 +43,33 @@ export function Report(): JSX.Element {
     }
     
     const cloudInitialize = async () => {
-        //
+        console.log("cloud initialize triggered!")
+        try {
+            const res = await axios.get(`${ApiUrl}/api/trackers/${id}/all/transactions`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("Authorization")}`
+                }
+            })
+            const data = await res.data
+            const transactions = data.data.tracker.transactions
+
+            // change everything to real date
+            transactions.map((item: {amount: any, description: null | string, image: null | string, name: string, type: "income" | "expense", transaction_date: string | Date}) => {
+                const realDate = new Date(item.transaction_date)
+                const realAmount = parseInt(item.amount, 10)
+                item.transaction_date = realDate
+                item.amount = realAmount
+                return item
+            })
+            console.log("cloud initialize data", transactions)
+            setData(transactions)
+        } catch(err) {
+            console.log(err)
+        }
     }
 
     //get the tracker data for local
-    const getTrackerData = async () => {
+    const getLocalTrackerData = async () => {
         try {
             if(id) {
                 const res = await DBgetonetracker(parseInt(id, 10))
@@ -58,7 +82,7 @@ export function Report(): JSX.Element {
     }
 
     const parse7Days = () => {
-        if(data) {
+        if(data && session === "local") {
             const now = new Date()
             const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
             const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
@@ -119,10 +143,76 @@ export function Report(): JSX.Element {
             // set data
             setDisplayData({income: sevenDaysIncome, outcome: SevenDaysOutcome, incomePercentage: incomeComparationPercentage, outcomePercentage: outcomeComparationPercentage, chartData: chartReadyData, highestIncome: highestSevenDaysIncome, highestOutcome: highestSevenDaysOutcome, transactionsHistory: last7Days})
         }
+
+        if(data && session === "cloud") {
+            const now = new Date()
+            const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+            const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
+    
+            // count the 7 days 
+            const last7Days = (data.filter(item => item.transaction_date >= sevenDaysAgo)).sort((a, b) => a.transaction_date - b.transaction_date)
+            console.log("last 7 days data", last7Days)
+            
+            let sevenDaysIncome = 0
+            let SevenDaysOutcome = 0
+            let SevenDaysBalance = 0 // unused, for now
+            last7Days.forEach((item) => {
+                if(item.type === "income") sevenDaysIncome += item.amount
+                if(item.type === "expense") SevenDaysOutcome += item.amount
+            });
+            console.log("seven days income outcome", sevenDaysIncome, SevenDaysOutcome)
+            
+            // // count the 7 days before
+            const last7DaysBefore = (data.filter(item => item.transaction_date >= fourteenDaysAgo && item.transaction_date < sevenDaysAgo)).sort((a, b) => a.date - b.date)
+            console.log("last 7 days before data", last7DaysBefore)
+
+            let sevenDaysBeforeIncome = 0
+            let sevenDaysBeforeOutcome = 0
+            let sevenDaysBeforeBalance = 0 // unused, for now
+            last7DaysBefore.forEach((item) => {
+                if(item.type === "income") sevenDaysBeforeIncome += item.amount
+                if(item.type === "expense") sevenDaysBeforeOutcome += item.amount            
+            })
+            console.log("seven days before income outcome", sevenDaysBeforeIncome, sevenDaysBeforeOutcome)
+
+            // calcute income message
+            let incomeComparationPercentage = Math.round((sevenDaysIncome - sevenDaysBeforeIncome) / sevenDaysBeforeIncome * 100)
+            if(incomeComparationPercentage === Infinity || Number.isNaN(incomeComparationPercentage)) incomeComparationPercentage = NaN
+
+            // calcute income message
+            let outcomeComparationPercentage = Math.round((SevenDaysOutcome - sevenDaysBeforeOutcome) / sevenDaysBeforeOutcome * 100)
+            if(outcomeComparationPercentage === Infinity || Number.isNaN(outcomeComparationPercentage)) outcomeComparationPercentage = NaN
+
+            // making chart data
+            let chartNowBalance = 0
+            let chartReadyData: {date: number, balance: number}[] = []
+            last7Days.forEach((item) => {
+                if(item.type === "income") chartNowBalance += item.amount
+                if(item.type === "expense") chartNowBalance -= item.amount
+
+                chartReadyData.push({date: item.transaction_date.getTime(), balance: chartNowBalance})
+            })
+            // making first and second message
+            const arraySevenDaysIncome: number[] = []
+            const arraySevenDaysOutcome: number[] = []
+            last7Days.forEach((item) => {
+                if(item.type === "income") arraySevenDaysIncome.push(item.amount)
+                if(item.type === "expense") arraySevenDaysOutcome.push(item.amount) 
+            })
+
+            let highestSevenDaysIncome: number | null = Math.max(...arraySevenDaysIncome)
+            if(highestSevenDaysIncome === -Infinity) highestSevenDaysIncome = null 
+
+            let highestSevenDaysOutcome: number | null = Math.max(...arraySevenDaysOutcome)
+            if(highestSevenDaysOutcome === -Infinity) highestSevenDaysOutcome = null 
+
+            // set data
+            setDisplayData({income: sevenDaysIncome, outcome: SevenDaysOutcome, incomePercentage: incomeComparationPercentage, outcomePercentage: outcomeComparationPercentage, chartData: chartReadyData, highestIncome: highestSevenDaysIncome, highestOutcome: highestSevenDaysOutcome, transactionsHistory: last7Days})
+        }
     }
 
     const parse30Days = () => {
-        if(data) {
+        if(data && session === "local") {
             const now = new Date()
             const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
             const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000)
@@ -183,10 +273,76 @@ export function Report(): JSX.Element {
 
             setDisplayData({income: thirtyDaysIncome, outcome: thirtyDaysOutcome, incomePercentage: incomeComparationPercentage, outcomePercentage: outcomeComparationPercentage, chartData: chartReadyData, highestIncome: highestThirtyDaysIncome, highestOutcome: highestThirtyDaysOutcome, transactionsHistory: last30Days})
         }
+
+        if(data && session === "cloud") {
+            const now = new Date()
+            const sevenDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+            const fourteenDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000)
+    
+            // count the 7 days 
+            const last7Days = (data.filter(item => item.transaction_date >= sevenDaysAgo)).sort((a, b) => a.transaction_date - b.transaction_date)
+            console.log("last 7 days data", last7Days)
+            
+            let sevenDaysIncome = 0
+            let SevenDaysOutcome = 0
+            let SevenDaysBalance = 0 // unused, for now
+            last7Days.forEach((item) => {
+                if(item.type === "income") sevenDaysIncome += item.amount
+                if(item.type === "expense") SevenDaysOutcome += item.amount
+            });
+            console.log("seven days income outcome", sevenDaysIncome, SevenDaysOutcome)
+            
+            // // count the 7 days before
+            const last7DaysBefore = (data.filter(item => item.transaction_date >= fourteenDaysAgo && item.transaction_date < sevenDaysAgo)).sort((a, b) => a.date - b.date)
+            console.log("last 7 days before data", last7DaysBefore)
+
+            let sevenDaysBeforeIncome = 0
+            let sevenDaysBeforeOutcome = 0
+            let sevenDaysBeforeBalance = 0 // unused, for now
+            last7DaysBefore.forEach((item) => {
+                if(item.type === "income") sevenDaysBeforeIncome += item.amount
+                if(item.type === "expense") sevenDaysBeforeOutcome += item.amount            
+            })
+            console.log("seven days before income outcome", sevenDaysBeforeIncome, sevenDaysBeforeOutcome)
+
+            // calcute income message
+            let incomeComparationPercentage = Math.round((sevenDaysIncome - sevenDaysBeforeIncome) / sevenDaysBeforeIncome * 100)
+            if(incomeComparationPercentage === Infinity || Number.isNaN(incomeComparationPercentage)) incomeComparationPercentage = NaN
+
+            // calcute income message
+            let outcomeComparationPercentage = Math.round((SevenDaysOutcome - sevenDaysBeforeOutcome) / sevenDaysBeforeOutcome * 100)
+            if(outcomeComparationPercentage === Infinity || Number.isNaN(outcomeComparationPercentage)) outcomeComparationPercentage = NaN
+
+            // making chart data
+            let chartNowBalance = 0
+            let chartReadyData: {date: number, balance: number}[] = []
+            last7Days.forEach((item) => {
+                if(item.type === "income") chartNowBalance += item.amount
+                if(item.type === "expense") chartNowBalance -= item.amount
+
+                chartReadyData.push({date: item.transaction_date.getTime(), balance: chartNowBalance})
+            })
+            // making first and second message
+            const arraySevenDaysIncome: number[] = []
+            const arraySevenDaysOutcome: number[] = []
+            last7Days.forEach((item) => {
+                if(item.type === "income") arraySevenDaysIncome.push(item.amount)
+                if(item.type === "expense") arraySevenDaysOutcome.push(item.amount) 
+            })
+
+            let highestSevenDaysIncome: number | null = Math.max(...arraySevenDaysIncome)
+            if(highestSevenDaysIncome === -Infinity) highestSevenDaysIncome = null 
+
+            let highestSevenDaysOutcome: number | null = Math.max(...arraySevenDaysOutcome)
+            if(highestSevenDaysOutcome === -Infinity) highestSevenDaysOutcome = null 
+
+            // set data
+            setDisplayData({income: sevenDaysIncome, outcome: SevenDaysOutcome, incomePercentage: incomeComparationPercentage, outcomePercentage: outcomeComparationPercentage, chartData: chartReadyData, highestIncome: highestSevenDaysIncome, highestOutcome: highestSevenDaysOutcome, transactionsHistory: last7Days})
+        }
     }
 
     const parse1Year = () => {
-        if(data) {
+        if(data && session === "local") {
             const now = new Date()
             const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
             const twoYearsAgo = new Date(now.getTime() - 730 * 24 * 60 * 60 * 1000)
@@ -247,45 +403,132 @@ export function Report(): JSX.Element {
 
             setDisplayData({income: oneYearIncome, outcome: oneYearOutcome, incomePercentage: incomeComparationPercentage, outcomePercentage: outcomeComparationPercentage, chartData: chartReadyData, highestIncome: highestOneYearIncome, highestOutcome: highestOneYearOutcome, transactionsHistory: last1Year})
         }
+
+        if(data && session === "cloud") {
+            const now = new Date()
+            const sevenDaysAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
+            const fourteenDaysAgo = new Date(now.getTime() - 730 * 24 * 60 * 60 * 1000)
+    
+            // count the 7 days 
+            const last7Days = (data.filter(item => item.transaction_date >= sevenDaysAgo)).sort((a, b) => a.transaction_date - b.transaction_date)
+            console.log("last 7 days data", last7Days)
+            
+            let sevenDaysIncome = 0
+            let SevenDaysOutcome = 0
+            let SevenDaysBalance = 0 // unused, for now
+            last7Days.forEach((item) => {
+                if(item.type === "income") sevenDaysIncome += item.amount
+                if(item.type === "expense") SevenDaysOutcome += item.amount
+            });
+            console.log("seven days income outcome", sevenDaysIncome, SevenDaysOutcome)
+            
+            // // count the 7 days before
+            const last7DaysBefore = (data.filter(item => item.transaction_date >= fourteenDaysAgo && item.transaction_date < sevenDaysAgo)).sort((a, b) => a.date - b.date)
+            console.log("last 7 days before data", last7DaysBefore)
+
+            let sevenDaysBeforeIncome = 0
+            let sevenDaysBeforeOutcome = 0
+            let sevenDaysBeforeBalance = 0 // unused, for now
+            last7DaysBefore.forEach((item) => {
+                if(item.type === "income") sevenDaysBeforeIncome += item.amount
+                if(item.type === "expense") sevenDaysBeforeOutcome += item.amount            
+            })
+            console.log("seven days before income outcome", sevenDaysBeforeIncome, sevenDaysBeforeOutcome)
+
+            // calcute income message
+            let incomeComparationPercentage = Math.round((sevenDaysIncome - sevenDaysBeforeIncome) / sevenDaysBeforeIncome * 100)
+            if(incomeComparationPercentage === Infinity || Number.isNaN(incomeComparationPercentage)) incomeComparationPercentage = NaN
+
+            // calcute income message
+            let outcomeComparationPercentage = Math.round((SevenDaysOutcome - sevenDaysBeforeOutcome) / sevenDaysBeforeOutcome * 100)
+            if(outcomeComparationPercentage === Infinity || Number.isNaN(outcomeComparationPercentage)) outcomeComparationPercentage = NaN
+
+            // making chart data
+            let chartNowBalance = 0
+            let chartReadyData: {date: number, balance: number}[] = []
+            last7Days.forEach((item) => {
+                if(item.type === "income") chartNowBalance += item.amount
+                if(item.type === "expense") chartNowBalance -= item.amount
+
+                chartReadyData.push({date: item.transaction_date.getTime(), balance: chartNowBalance})
+            })
+            // making first and second message
+            const arraySevenDaysIncome: number[] = []
+            const arraySevenDaysOutcome: number[] = []
+            last7Days.forEach((item) => {
+                if(item.type === "income") arraySevenDaysIncome.push(item.amount)
+                if(item.type === "expense") arraySevenDaysOutcome.push(item.amount) 
+            })
+
+            let highestSevenDaysIncome: number | null = Math.max(...arraySevenDaysIncome)
+            if(highestSevenDaysIncome === -Infinity) highestSevenDaysIncome = null 
+
+            let highestSevenDaysOutcome: number | null = Math.max(...arraySevenDaysOutcome)
+            if(highestSevenDaysOutcome === -Infinity) highestSevenDaysOutcome = null 
+
+            // set data
+            setDisplayData({income: sevenDaysIncome, outcome: SevenDaysOutcome, incomePercentage: incomeComparationPercentage, outcomePercentage: outcomeComparationPercentage, chartData: chartReadyData, highestIncome: highestSevenDaysIncome, highestOutcome: highestSevenDaysOutcome, transactionsHistory: last7Days})
+        }
     }
 
     const setHistory = () => {
-        const size = 5
-        const offset = (page - 1) * size
+        if(session === "local") {
+            const size = 5
+            const offset = (page - 1) * size
+    
+            const uncleanedData: any[] = (displayData.transactionsHistory).sort((a, b) => b.date - a.date)
+            const cleanedData: any[] = []
+    
+            uncleanedData.forEach(item => {
+                if(item.image) {
+                    const image = item.image
+                    const url = URL.createObjectURL(image)
+                    item.imageUrl = url
+                }
+                cleanedData.push(item)
+            })
+    
+            // calculate last page
+            const total = cleanedData.length
+            const pages = Math.ceil(total / size)
+            setLastPage(pages)
+    
+            // paginate
+            const paginatedData = cleanedData.slice((offset), size * page)
+            console.log("history Data", paginatedData)
+            setHistoryData(paginatedData)
+        }
 
-        const uncleanedData: any[] = (displayData.transactionsHistory).sort((a, b) => b.date - a.date)
-        const cleanedData: any[] = []
-
-        uncleanedData.forEach(item => {
-            if(item.image) {
-                const image = item.image
-                const url = URL.createObjectURL(image)
-                item.imageUrl = url
-            }
-            cleanedData.push(item)
-        })
-
-        // calculate last page
-        const total = cleanedData.length
-        const pages = Math.ceil(total / size)
-        setLastPage(pages)
-
-        // paginate
-        const paginatedData = cleanedData.slice((offset), size * page)
-        console.log("history Data", paginatedData)
-        setHistoryData(paginatedData)
+        if(session === "cloud") {
+            const size = 5
+            const offset = (page - 1) * size
+    
+            const cleanedData: any[] = (displayData.transactionsHistory).sort((a, b) => b.transaction_date - a.transaction_date)
+    
+            // calculate last page
+            const total = cleanedData.length
+            const pages = Math.ceil(total / size)
+            setLastPage(pages)
+    
+            // paginate
+            const paginatedData = cleanedData.slice((offset), size * page)
+            console.log("history Data", paginatedData)
+            setHistoryData(paginatedData)
+        }
     }
 
 
     useEffect(() => {
-        getTrackerData()
         
         const session = localStorage.getItem("session")
         if(session === null) window.location.href = "/access"
         
         setSession(session as "cloud" | "local")
         if(session === "cloud") cloudInitialize()
-        if(session === "local") localInitialize()
+        if(session === "local") {
+            localInitialize()
+            getLocalTrackerData()
+        }
 
     }, [])
 
@@ -364,7 +607,7 @@ export function Report(): JSX.Element {
                             </button>
                         ))}
                     </div>
-                    {historyData.length >= 3 && <div className="flex flex-col items-center w-[87%] gap-3">
+                    {session === "local" && displayData.transactionsHistory.length >= 3 && <div className="flex flex-col items-center w-[87%] gap-3">
                         <div className="flex justify-between w-full">
                             <h3 className="text-sm font-regular">Laporan & Insight</h3>
                         </div>
@@ -523,7 +766,167 @@ export function Report(): JSX.Element {
                             </motion.div>
                         </div>
                     </div>}
-                    {historyData.length < 3 && <div className="flex flex-col items-center gap-5 justify-center h-50 px-5">
+                    {session === "cloud" && displayData.transactionsHistory.length >= 3 && <div className="flex flex-col items-center w-[87%] gap-3">
+                        <div className="flex justify-between w-full">
+                            <h3 className="text-sm font-regular">Laporan & Insight</h3>
+                        </div>
+                        <div className="w-full flex flex-col gap-3.5">
+                            {/* <div className="bg-white flex flex-col w-full justify-center items-start p-4 rounded-xl">
+                                <p className="font-normal text-base">Saldo Akhir</p>
+                                <p className="font-medium text-lg">Rp.3.796.105</p>
+                            </div> */}
+                            <div className="flex flex-row gap-3.5">
+                                <div className="bg-white flex flex-col w-full justify-center items-start p-4 rounded-xl gap-1 h-fit">
+                                    <div className="flex flex-col">
+                                        <p className="font-normal text-base">Pemasukkan</p>
+                                        <p className="font-medium text-lg">Rp.{displayData.income.toLocaleString("ID")}</p>
+                                    </div>
+                                    {Number.isNaN(displayData.incomePercentage) && null}
+                                    {!Number.isNaN(displayData.incomePercentage) && 
+                                        <div>
+                                            <p className="text-sm font-normal text-neutral-600">
+                                                {displayData.incomePercentage}% dari {range === 7 ? "minggu lalu" : range === 30 ? "bulan lalu" : "tahun lalu"}
+                                            </p>
+                                        </div>
+                                    }
+                                </div>
+                                <div className="bg-white flex flex-col w-full justify-center items-start p-4 rounded-xl gap-1 h-fit">
+                                    <div className="flex flex-col">
+                                        <p className="font-normal text-base">Pengeluaran</p>
+                                        <p className="font-medium text-lg">Rp.{displayData.outcome.toLocaleString("ID")}</p>
+                                    </div>
+                                    {Number.isNaN(displayData.outcomePercentage) && null}
+                                    {!Number.isNaN(displayData.outcomePercentage) && 
+                                        <div>
+                                            <p className="text-sm font-normal text-neutral-600">
+                                                {displayData.outcomePercentage}% dari {range === 7 ? "minggu lalu" : range === 30 ? "bulan lalu" : "tahun lalu"}
+                                            </p>
+                                        </div>
+                                    }                                
+                                </div>
+                            </div>
+                        </div>
+                        <div className="w-full bg-white p-3 rounded-xl">
+                            <ChartContainer config={chartConfig}>
+                                <AreaChart
+                                    accessibilityLayer
+                                    data={displayData.chartData}
+                                    margin={{
+                                    left: 10,
+                                    right: 10,
+                                    top: 10 ,
+                                    bottom: 10
+                                    }}
+                
+                                >
+                                    <CartesianGrid vertical={false} />
+                                    <XAxis
+                                        dataKey="date"
+                                        tickLine={true}
+                                        axisLine={true}
+                                        tickMargin={6}
+                                        tickFormatter={value => {
+                                        const d = new Date(value)
+                                        return d.toLocaleDateString("id-ID", { day: "2-digit", month: "2-digit" })
+                                        }}                                    
+                                    />
+                                    <YAxis
+                                        domain={['dataMin', 'dataMax']}
+                                        tickLine={false}
+                                        axisLine={false}
+                                        tick={false}
+                                        width={0}
+                                    />
+                                    <ChartTooltip
+                                        cursor={false}
+                                        content={<ChartTooltipContent indicator="line" />}
+                                    />
+                                    <Area
+                                        dataKey="balance"
+                                        type='natural'
+                                        fill="#16E716"
+                                        fillOpacity={0.2}
+                                        stroke="#16E716"
+                                    />
+                                </AreaChart>
+                            </ChartContainer>
+                            <div className="flex flex-col gap-3 px-3">
+                                {displayData.highestIncome &&                                
+                                    <div className="flex justify-start items-center gap-2">
+                                        <FontAwesomeIcon icon={faDollar} className="text-green-600/70" />
+                                        <p className="text-sm font-normal text-neutral-700">Pemasukkan terbesarmu {range === 7 ? "minggu ini" : range === 30 ? "bulan ini" : "tahun ini"} adalah Rp.{displayData.highestIncome?.toLocaleString("ID")}</p>
+                                    </div>
+                                }
+                                {displayData.highestOutcome &&                                
+                                    <div className="flex justify-start items-center gap-2">
+                                        <FontAwesomeIcon icon={faTriangleExclamation} className="text-red-500/80" />
+                                        <p className="text-sm font-normal text-neutral-700">Pengeluaran terbesarmu {range === 7 ? "minggu ini" : range === 30 ? "bulan ini" : "tahun ini"} adalah Rp.{displayData.highestOutcome?.toLocaleString("ID")}</p>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div className="w-full flex flex-col gap-2 mt-2">
+                            <h3 className="text-sm font-regular">Riwayat dalam rentang {range === 7 ? "7 hari" : range === 30 ? "1 bulan" : "1 tahun"}</h3>
+                            {historyData?.map(item => (
+                                <Dialog>
+                                    <DialogTrigger className="flex w-full bg-white rounded-md">
+                                        {item.image && <div style={{backgroundImage: `url(${ApiUrl}/storage/${item.image})`, backgroundPosition: "center", backgroundRepeat: "no-repeat", backgroundSize: "cover"}} className="w-20 bg-neutral-400 rounded-l-md" />}
+                                        <div className="flex w-full text-start justify-between flex-1 p-3">
+                                            <div className="flex flex-col w-full pb-5 gap-0.5">
+                                                <div className="flex w-full flex-col flex-1">
+                                                    <p className="text-sm font-normal">{item.name}</p>
+                                                    <p className="font-semibold text-base">{item.type === "income" ? "+ " : "- "} Rp.{item.amount.toLocaleString("iD")}</p>
+                                                </div>
+                                            </div>
+                                            <div className="self-end flex-1 font-normal text-xs text-neutral-500">{(new Date(item.transaction_date)).getDate()}-{(new Date(item.transaction_date)).getMonth()}-{(new Date(item.transaction_date)).getFullYear()}</div>
+                                        </div>
+                                    </DialogTrigger>
+                                    <DialogContent className="w-full flex flex-col items-center">
+                                        {item.image && <div style={{backgroundImage: `url(${ApiUrl}/storage/${item.image})`, backgroundPosition: "center", backgroundRepeat: "no-repeat", backgroundSize: "cover"}} className="w-[calc(100vw-70px)] h-70 sm:w-full bg-neutral-300" />}
+                                        <div className="flex w-full flex-row justify-between items-end">
+                                            <h4 className="font-medium text-xl">{item.name}</h4>
+                                            <p className="font-semibold text-2xl text-neutral-600">{item.type === "income" ? "+ " : "- "} Rp.{item.amount.toLocaleString("iD")}</p>
+                                        </div>
+                                        <p className="text-base font-normal self-start -mt-2">{item.description}</p>
+                                        <p className="text-sm font-normal text-neutral-400 self-end">
+                                            {(new Date(item.transaction_date)).toLocaleDateString("ID", {
+                                                weekday: "long",
+                                                day: "numeric",
+                                                month: "long",
+                                                year: "numeric"
+                                            })}
+                                        </p>
+                                    </DialogContent>
+                                </Dialog>
+                            ))}
+                            <motion.div
+                                className="w-full bg-background-primary flex justify-center items-center h-15"
+                            >
+                        <Pagination className="relative">
+                            <PaginationContent className="relative">
+                                <PaginationItem onClick={() => changePage("first")} className={`${page === 1 && "opacity-0"}`}>
+                                    <PaginationPrevious />
+                                </PaginationItem>
+                                <PaginationItem onClick={() => changePage("down")} className={`${page === 1 && "opacity-0"}`}>
+                                    <PaginationLink>1</PaginationLink>
+                                </PaginationItem>
+                                <PaginationItem>
+                                    <PaginationLink isActive className="bg-green-400/60 text-white">
+                                        {page}
+                                    </PaginationLink>
+                                </PaginationItem>
+                                <PaginationItem onClick={() => changePage("up")} className={`${page === lastPage && "opacity-0"}`}>
+                                    <PaginationLink>{page + 1}</PaginationLink>
+                                </PaginationItem>
+                                <PaginationItem onClick={() => changePage("last")} className={`${page === lastPage && "opacity-0"}`}>
+                                    <PaginationNext />
+                                </PaginationItem>
+                            </PaginationContent>
+                            </Pagination>
+                            </motion.div>
+                        </div>
+                    </div>}
+                    {displayData.transactionsHistory.length < 3 && <div className="flex flex-col items-center gap-5 justify-center h-50 px-5">
                         <FontAwesomeIcon icon={faQuestion} className="text-7xl text-black/40" />
                         <p className="text-center font-medium text-base text-black/50">You have very few transactions <br /> <span className="font-normal">Unfortunately, we cannot generate your report.</span></p>
                     </div>}

@@ -32,6 +32,11 @@ export function TrackerNavbar({ isOut, setIsOut, backLink, trackerName }: tracke
         }
 
         //for cloud
+        if(WindowSession === "cloud") {
+            console.log("navbar", user)
+            setUserData(user)
+            console.log(user)
+        }
 
         setSession(WindowSession as "cloud" | "local")
     }, [])
@@ -74,7 +79,7 @@ export function TrackerNavbar({ isOut, setIsOut, backLink, trackerName }: tracke
                                                 key="accountDetailsClosed"
                                                 onClick={() => setIsAccountOpen(true)}
                                                 style={{backgroundImage: `url(${session === "local" ? "" : ""})`, backgroundPosition: "center", backgroundRepeat: "no-repeat", backgroundSize: "contain"}}
-                                                className={`w-8 h-8 rounded-full ${session === "local" ? "flex justify-center items-center border" : ""}`}
+                                                className={`w-8 h-8 rounded-full ${session === "local" ? "flex justify-center items-center border" : "flex justify-center items-center border"}`}
                                                 initial={{
                                                     opacity: 0
                                                 }}
@@ -109,7 +114,7 @@ export function TrackerNavbar({ isOut, setIsOut, backLink, trackerName }: tracke
                         <AnimatePresence>
                             {isAccountOpen && !isOut && <motion.div 
                                 key="accountDetails"
-                                className="fixed right-0 sm:right-[4%] top-0 mt-15 mr-6 flex flex-col gap-3.5 bg-neutral-50/40 border-[0.5px] shadow p-3.5 rounded-xl backdrop-blur-[2px] backdrop-grayscale-50 md:right-auto md:-translate-x-53 min-w-47"
+                                className="fixed right-0 sm:right-[4%] top-0 mt-15 mr-6 flex flex-col gap-3.5 bg-neutral-50/40 border-[0.5px] shadow p-3.5 rounded-xl backdrop-blur-[2px] backdrop-grayscale-50 md:right-auto md:-translate-x-55 min-w-48"
                                 initial = {{
                                     x: 10,
                                     opacity: 0
@@ -136,12 +141,12 @@ export function TrackerNavbar({ isOut, setIsOut, backLink, trackerName }: tracke
                                 }}
                             >
                                 <div className="flex items-center gap-2.5">
-                                    <div style={{backgroundImage: `url(${session === "local" ? "" : ""})`, backgroundPosition: "center", backgroundRepeat: "no-repeat", backgroundSize: "contain"}} className={`w-10 h-10 rounded-full ${session === "local" ? "flex justify-center items-center border" : ""}`}>
+                                    <div style={{backgroundImage: `url(${session === "local" ? "" : ""})`, backgroundPosition: "center", backgroundRepeat: "no-repeat", backgroundSize: "contain"}} className={`w-10 h-10 rounded-full ${session === "local" ? "flex justify-center items-center border" : "flex justify-center items-center border"}`}>
                                          {!userData?.avatar && <FontAwesomeIcon icon={faUser} className="text-base text-neutral-700" />}
                                     </div> 
                                     <div>
-                                        <h3 className="font-medium text-[15px]">{session === "local" ? userData?.name : ""}</h3>
-                                        <p className="font-medium text-xs">{session === "local" ? null : ""}</p>
+                                        <h3 className="font-medium text-[15px]">{session === "local" ? userData?.name : userData?.name}</h3>
+                                        <p className="font-medium text-xs">{session === "local" ? null : userData?.email}</p>
                                     </div>
                                 </div>
                                 <div className="flex flex-col gap-2 w-full">
