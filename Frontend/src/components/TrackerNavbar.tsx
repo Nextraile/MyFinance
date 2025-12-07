@@ -39,7 +39,7 @@ export function TrackerNavbar({ isOut, setIsOut, backLink, trackerName }: tracke
     const [ isAccountOpen, setIsAccountOpen ] = useState<boolean>(false)
 
     return (
-            <div className="flex justify-center z-10 fixed">
+            <div className="flex justify-center z-10 fixed md:max-w-[650px]">
                 <AnimatePresence>
                     {!isOut && <motion.div
                     key={"navbar"}
@@ -63,7 +63,7 @@ export function TrackerNavbar({ isOut, setIsOut, backLink, trackerName }: tracke
                     }}
                     >
                         <div className="fixed z-0 bg-background-primary w-full h-15" />
-                        <div className="flex justify-center items-center fixed w-screen z-10 mt-5 px-5">
+                        <div className="flex justify-center items-center fixed w-screen z-10 mt-5 px-5 md:max-w-[650px]">
                             <div className="flex justify-between items-center z-10 w-full">
                                 <FontAwesomeIcon icon={faArrowLeft} onClick={() => {setIsOut(true); setTimeout(() => window.location.href = backLink, 400)}} className="w-10 h-10 text-xl text-neutral-800" />
                                 <h1 className="ml-[7px] font-medium text-base text-neutral-500">{trackerName}</h1>
@@ -109,7 +109,7 @@ export function TrackerNavbar({ isOut, setIsOut, backLink, trackerName }: tracke
                         <AnimatePresence>
                             {isAccountOpen && !isOut && <motion.div 
                                 key="accountDetails"
-                                className="fixed right-0 sm:right-[4%] top-0 mt-15 mr-6 flex flex-col gap-3.5 bg-neutral-50/40 border-[0.5px] shadow p-3.5 rounded-xl backdrop-blur-[2px] backdrop-grayscale-50"
+                                className="fixed right-0 sm:right-[4%] top-0 mt-15 mr-6 flex flex-col gap-3.5 bg-neutral-50/40 border-[0.5px] shadow p-3.5 rounded-xl backdrop-blur-[2px] backdrop-grayscale-50 md:right-auto md:-translate-x-53 min-w-47"
                                 initial = {{
                                     x: 10,
                                     opacity: 0

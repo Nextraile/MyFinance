@@ -1,28 +1,31 @@
 import { Input } from "@/components/ui/input";
 import { userData } from "@/lib/userData";
-import { faArrowRightFromBracket, faCloud, faLock, faMagnifyingGlass, faMoneyBill, faMoneyBillWave, faSun, faUserPen } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRightFromBracket, faCloud, faEllipsisV, faHamburger, faLock, faMagnifyingGlass, faMoneyBill, faMoneyBillWave, faQuestion, faSun, faTrash, faUserPen } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { PlusIcon, XIcon } from "lucide-react";
 import { useEffect, useRef, useState, type JSX } from "react";
-import { motion, AnimatePresence, spring } from "motion/react";
+import { motion, AnimatePresence, spring, easeOut } from "motion/react";
 import { useLoaderData, useRouteLoaderData } from "react-router-dom";
-import { faUser } from "@fortawesome/free-regular-svg-icons";
+import { faTrashAlt, faUser } from "@fortawesome/free-regular-svg-icons";
 import { ApiUrl, StorageUrl } from "@/lib/variable";
 import axios, { isAxiosError } from "axios";
 import { DBcreatetracker, DBgetalltrackers } from "@/lib/db";
+import { ContextMenu, ContextMenuContent, ContextMenuItem } from "@/components/ui/context-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export function Dashboard(): JSX.Element {
     const mainLoaderData = useRouteLoaderData("main")
     const loaderData = useLoaderData<[any]>()
     
-    const [ trackers, setTrackers ] = useState<any[]>([])
+    const [ trackers, setTrackers ] = useState<{id: number, user_id: number, description: string, initial_balance: number, name: string, transactions: {amount: number, type: "income" | "expense"}[]}[] | []>([])
     const [ user, setUser ] = useState<any[]>([])
     const [ isAccountOpen, setIsAccountOpen ] = useState<boolean>(false)
     const [ isCreateBoxOpen, setIsCreateBoxOpen ] = useState<boolean>(false)
     const [ isOut, setIsOut ] = useState<boolean>(false)
     const [ initialBalance, setInitialBalance ] = useState<string>("")
     const [ session, setSession ] = useState<"cloud" | "local" | null>(null)
-    
+    const [ searchValue, setSearchValue ] = useState<string>("")
+
     const createBoxTitle = useRef<HTMLInputElement | null>(null)
     const createBoxDescription = useRef<HTMLInputElement | null>(null)
 
@@ -37,7 +40,8 @@ export function Dashboard(): JSX.Element {
             })
 
             const data = await res.data
-            setTrackers(data.trackers)
+            console.log("cloud trackers initial fetch", data.data.trackers)
+            setTrackers(data.data.trackers)
         } catch(err) {
             if(isAxiosError(err)) {
                 console.log("dashboardLoader", err)
@@ -65,6 +69,11 @@ export function Dashboard(): JSX.Element {
         if(session === "local") localGetTrackers()
         setSession(session as "cloud" | "local")
     }, [])
+
+    const reloadTracker = () => {
+        if(session === "cloud") cloudGetTrackers()
+        if(session === "local") localGetTrackers()
+    }
 
     const modifyInitialBalance = (value: string) => {
         const cleaned = value.replace(/[^0-9.]/g, "")
@@ -106,25 +115,30 @@ export function Dashboard(): JSX.Element {
                     console.log(err)
                 }
             }
+
+            if(session === "cloud") {
+                try {
+                    setIsCreateBoxOpen(false)
+                    const res = await axios.post(`${ApiUrl}/api/trackers`, {
+                        name: name,
+                        description: desc,
+                        initial_balance: cleanedBalance
+                    }, {
+                        headers: {
+                            Authorization: `Bearer ${window.localStorage.getItem("Authorization")}`
+                        }
+                    })
+
+                    console.log(res)
+                    reloadTracker()
+                } catch(err) {
+                    setIsCreateBoxOpen(false)
+                    if(isAxiosError(err)) {
+                        console.log(err)
+                    }
+                }
+            }
         }
-
-        // try {
-        //     const res = await axios.post(`${ApiUrl}/api/trackers`, {
-        //         name: name,
-        //         description: desc,
-        //         initial_balance: cleanedBalance
-        //     }, {
-        //         headers: {
-        //             Authorization: `Bearer ${window.localStorage.getItem("Authorization")}`
-        //         }
-        //     })
-
-        //     console.log(res)
-        // } catch(err) {
-        //     if(isAxiosError(err)) {
-        //         console.log(err)
-        //     }
-        // }
     }
 
     const signout = async () => {
@@ -153,12 +167,57 @@ export function Dashboard(): JSX.Element {
         }, 500)
     }
 
+    const deleteTracker = async (id: number) => {
+        if(session === "cloud") {
+            try {
+                await axios.delete(`${ApiUrl}/api/trackers/${id}`, {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("Authorization")}`
+                    }
+                })
+                reloadTracker()
+            } catch(err) {
+                reloadTracker()
+            }
+        }
+    }
+
+    const searchTracker = async () => {
+        try {            
+            if(session === "cloud") {
+                const res = await axios.get(`${ApiUrl}/api/search/trackers?q=${encodeURIComponent(searchValue)}`, {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("Authorization")}`
+                    }
+                })
+            
+                const data = await res.data
+                console.log("cloud trackers search fetch", data.data.trackers)
+                setTrackers(data.data.trackers)
+            }
+        } catch(err) {
+            console.log(err)
+        }
+    }
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            console.log("triggered!")
+            searchTracker()
+        }, 750)
+
+        return () => {
+            console.log("debounced")
+            clearTimeout(timer)
+        }
+    }, [searchValue])
+
     return (
-        <section onClick={() => decideCreateBox()} className="flex flex-col items-center gap-5 min-h-screen">
-            <div className="flex justify-center">
+        <section onClick={() => decideCreateBox()} className="flex flex-col items-center gap-5 min-h-screen md:max-w-[650px]">
+            <div className="flex justify-center max-w-[650px]">
                 <AnimatePresence>
                     {!isOut && <motion.div
-                        className="flex justify-center items-center gap-2 mt-5 w-[85%] fixed z-10"
+                        className="flex justify-center items-center gap-2 mt-5 w-[85%] fixed z-10 md:max-w-[650px]"
                         initial={{
                             x: 30,
                             opacity: 0,
@@ -181,7 +240,7 @@ export function Dashboard(): JSX.Element {
                             <label htmlFor="search" className="absolute pl-4 z-1">
                                 <FontAwesomeIcon icon={faMagnifyingGlass} className="text-neutral-700" />
                             </label>
-                            <Input id="search" type="text" className="rounded-full h-10 pl-11 bg-white/50 focus:bg-neutral-50/80 backdrop-blur-[2px] backdrop-grayscale-50" placeholder="Search MyTracker" />
+                            <Input id="search" value={searchValue} onChange={(e) => setSearchValue(e.target.value)} type="text" className="rounded-full h-10 pl-11 bg-white/50 focus:bg-neutral-50/80 backdrop-blur-[2px] backdrop-grayscale-50" placeholder="Search MyTracker" />
                         </div>}
                         {session === "local" && <div className="flex items-center flex-1 bg-white/10 backdrop-blur-[2px]">
                             <Input id="search" disabled type="text" className="rounded-full h-10 pl-11bg-white/50 focus:bg-neutral-50/80 backdrop-blur-[2px] backdrop-grayscale-50" placeholder="Search mode disabled in local account" />
@@ -227,7 +286,7 @@ export function Dashboard(): JSX.Element {
                             <AnimatePresence>
                                 {isAccountOpen && !isOut && <motion.div
                                     key="accountDetails"
-                                    className="fixed right-0 sm:right-[4%] top-0 mt-18 mr-6 flex flex-col gap-3.5 bg-neutral-50/80 border-[0.5px] shadow p-3.5 rounded-xl backdrop-blur-[2px] backdrop-grayscale-50 z-20"
+                                    className="fixed right-0 sm:right-[4%] top-0 mt-18 mr-6 flex flex-col gap-3.5 bg-neutral-50/80 border-[0.5px] shadow p-3.5 rounded-xl backdrop-blur-[2px] backdrop-grayscale-50 z-20 md:right-auto md:translate-x-17"
                                     initial = {{
                                         x: 10,
                                         opacity: 0
@@ -324,7 +383,7 @@ export function Dashboard(): JSX.Element {
                 </div>
             </div>
             <motion.div 
-                className="flex flex-col sm:grid sm:grid-cols-2 lg:grid-cols-3 w-[87%] justify-center items-center gap-2.5 mt-15"
+                className="flex flex-col sm:grid sm:grid-cols-2 w-[87%] justify-center items-center gap-2.5 mt-15"
                 // layout
             >
                 <AnimatePresence mode="popLayout">
@@ -364,7 +423,7 @@ export function Dashboard(): JSX.Element {
                     </motion.div>}
                 </AnimatePresence>
                 <AnimatePresence>
-                    {!isOut && trackers?.map((item: any, i: any) => (
+                    {!isOut && trackers?.map((item, i) => (
                         <motion.div
                             key={i}
                             className="bg-white w-full flex-1 px-5 py-4 rounded-xl z-0"
@@ -405,25 +464,41 @@ export function Dashboard(): JSX.Element {
                             layoutId={i.toString()}
                         >
                             {session === "cloud" &&
-                                <div className="flex flex-col gap-3.5">
-                                    <div className="flex flex-col gap-0.5">
-                                        <h2 className="font-semibold text-base">{item.tittle}</h2>
-                                        <p className="text-base font-normal">{item.desc}</p>
+                                <div className="w-full flex justify-between gap-3">
+                                    <div className="flex flex-col gap-3.5 min-w-0">
+                                        <div className="flex flex-col gap-0.5">
+                                            <h2 className="font-semibold text-base text-wrap wrap-break-word">{item.name}</h2>
+                                            <p className="text-base font-normal text-wrap wrap-break-word">{item.description}</p>
+                                        </div>
+                                        <div>
+                                            {item.transactions?.map((item) => (
+                                                <p className="text-sm font-normal">
+                                                    {item.type === "expense" ? "-" : "+"} Rp. {item.amount.toLocaleString("ID")}
+                                                </p>
+                                            ))}
+                                            {item.transactions?.length === 0 && <p className="font-medium text-sm text-black/50">{(item.name).toLowerCase()} last transactions will apear here.</p>}
+                                        </div>
                                     </div>
-                                    <div>
-                                        {item.history.map((item: any) => (
-                                            <p className="text-sm font-normal">
-                                                {item.type === "pengeluaran" ? "-" : "+"} Rp. {item.harga.toLocaleString("ID")}
-                                            </p>
-                                        ))}
-                                    </div>
+                                    <Popover>
+                                        <PopoverTrigger className="w-3 self-start" onClick={(e) => e.stopPropagation()}>
+                                            <FontAwesomeIcon icon={faEllipsisV} className="text-black/60" />
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-fit px-0 py-2">
+                                            <motion.div 
+                                                className="flex items-center gap-1 px-3"
+                                            >
+                                                <FontAwesomeIcon icon={faTrashAlt} />
+                                                <p className="font-medium text-base" onClick={(e) => {e.stopPropagation(); deleteTracker(item.id)}}>Delete</p>
+                                            </motion.div>
+                                        </PopoverContent>
+                                    </Popover>
                                 </div>
                             }
                             {session === "local" &&
                                 <div className="flex flex-col gap-3.5">
                                     <div className="flex flex-col gap-0.5">
-                                        <h2 className="font-semibold text-base">{item.name}</h2>
-                                        <p className="text-base font-normal">{item.description}</p>
+                                        <h2 className="font-semibold text-base text-wrap wrap-break-word">{item.name}</h2>
+                                        <p className="text-base font-normal text-wrap wrap-break-word">{item.description}</p>
                                     </div>
                                     <div>
                                         {/* {item.history?.map((item: any) => (
@@ -463,11 +538,11 @@ export function Dashboard(): JSX.Element {
                             }}
                         >
                             <motion.div>
-                                <FontAwesomeIcon icon={faMoneyBillWave} className="text-5xl text-neutral-300" />
+                                <FontAwesomeIcon icon={searchValue  === "" ? faMoneyBillWave : faQuestion} className="text-5xl text-neutral-300" />
                             </motion.div>
                             <motion.div className="text-center text-neutral-400">
-                                <p className="font-medium">Its a bit empty here eh?</p>
-                                <p>Start making your tracker by clicking the + sign below!</p>
+                                <p className="font-medium">{searchValue === "" ? "Its a bit empty here eh?" : "*Cricket noise*"}</p>
+                                <p>{searchValue === "" ? "Start making your tracker by clicking the + sign below!" : "No tracker found, try a different search!"}</p>
                             </motion.div>
                         </motion.div>
                     }
@@ -475,7 +550,7 @@ export function Dashboard(): JSX.Element {
             </motion.div>
             <AnimatePresence>
                 {!isOut && <motion.div
-                    className="flex justify-center items-center w-12 h-12 fixed bottom-0 right-0 mr-6 mb-8 rounded-md bg-green-400/60 backdrop-blur-[2px] backdrop-grayscale-50 sm:right-[4%] border-[0.5px] shadow"
+                    className="flex justify-center items-center w-12 h-12 fixed bottom-0 right-0 mr-6 mb-8 rounded-md bg-green-400/60 backdrop-blur-[2px] backdrop-grayscale-50 sm:right-[4%] border-[0.5px] shadow md:bottom-0 md:right-auto md:translate-x-70"
                     initial={{
                         y: 50,
                         opacity: 0,

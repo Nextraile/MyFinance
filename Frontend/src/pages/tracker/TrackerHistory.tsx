@@ -11,6 +11,8 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import { TrackerNavbar } from "@/components/TrackerNavbar";
 import { DBgetalltransactions } from "@/lib/db";
 import { useParams, useRouteLoaderData } from "react-router-dom";
+import axios from "axios";
+import { ApiUrl } from "@/lib/variable";
 
 export function TrackerHistory(): JSX.Element {
     const { id } = useParams()
@@ -72,8 +74,28 @@ export function TrackerHistory(): JSX.Element {
         }
     }
 
+    const cloudGetTransactions = async () => {
+        console.log("get transactions triggered!")
+        try {
+            const res = await axios.get(`${ApiUrl}/api/trackers/${id}/paginate/transactions?page=${page}`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("Authorization")}`
+                }
+            })
+            const data = res.data
+            const transactions = data.data.transactions.data 
+            console.log(data.data.transactions.data)
+
+            setLastPage(data.data.transactions.last_page)
+            setData(transactions)
+        } catch(err) {
+            console.log(err)
+        }
+    }
+
     const getData = () => {
         if(WindowSession === "local") localGetTransactions()
+        if(WindowSession === "cloud") cloudGetTransactions()
     }
 
     const changePage = (direction: "up" | "down" | "first" | "last") => {
@@ -95,7 +117,7 @@ export function TrackerHistory(): JSX.Element {
     }, [page, direction, showPlus, showwMinus])
 
     return (
-        <section className="flex flex-col items-center">
+        <section className="flex flex-col items-center w-full md:max-w-[650px]">
             <TrackerNavbar trackerName="My New Navbar" setIsOut={setIsOut} isOut={isOut} backLink={`/app/tracker/${id}`}  />
             <AnimatePresence>
                 {!isOut && <motion.div
@@ -154,7 +176,7 @@ export function TrackerHistory(): JSX.Element {
                             <FontAwesomeIcon icon={faQuestion} className="text-7xl text-black/40" />
                             <p className="text-center font-medium text-base text-black/50">Oops... Your data looks empty <br /> <span className="font-normal">Try changing the filter or adding some data.</span></p>
                         </div>}
-                        {data.map(item => (
+                        {session === "local" && data.map(item => (
                             <Dialog>
                                 <DialogTrigger className="flex w-full bg-white rounded-md">
                                     {item.image && <div style={{backgroundImage: `url(${item.image})`, backgroundPosition: "center", backgroundRepeat: "no-repeat", backgroundSize: "cover"}} className="w-20 bg-neutral-400 rounded-l-md" />}
@@ -177,6 +199,38 @@ export function TrackerHistory(): JSX.Element {
                                     <p className="text-base font-normal self-start -mt-2">{item.desc}</p>
                                     <p className="text-sm font-normal text-neutral-400 self-end">
                                         {item.date.toLocaleDateString("ID", {
+                                            weekday: "long",
+                                            day: "numeric",
+                                            month: "long",
+                                            year: "numeric"
+                                        })}
+                                    </p>
+                                </DialogContent>
+                            </Dialog>
+                        ))}
+                        {session === "cloud" && data.map(item => (
+                            <Dialog>
+                                <DialogTrigger className="flex w-full bg-white rounded-md">
+                                    {item.image && <div style={{backgroundImage: `url(${ApiUrl}/storage/${item.image})`, backgroundPosition: "center", backgroundRepeat: "no-repeat", backgroundSize: "cover"}} className="w-20 bg-neutral-400 rounded-l-md" />}
+                                    <div className="flex w-full text-start justify-between flex-1 p-3">
+                                        <div className="flex flex-col w-full pb-5 gap-0.5">
+                                            <div className="flex w-full flex-col flex-1">
+                                                <p className="text-sm font-normal">{item.name}</p>
+                                                <p className="font-semibold text-base">{item.type === "income" ? "+ " : "- "} Rp.{parseInt(item.amount, 10).toLocaleString("ID")}</p>
+                                            </div>
+                                        </div>
+                                        <div className="self-end flex-1 font-normal text-xs text-neutral-500">{(new Date(item.transaction_date)).getDate()}-{(new Date(item.transaction_date)).getMonth()}-{(new Date(item.transaction_date)).getFullYear()}</div>
+                                    </div>
+                                </DialogTrigger>
+                                <DialogContent className="w-full flex flex-col items-center">
+                                    {item.image && <div style={{backgroundImage: `url(${ApiUrl}/storage/${item.image})`, backgroundPosition: "center", backgroundRepeat: "no-repeat", backgroundSize: "cover"}} className="w-[calc(100vw-70px)] h-70 sm:w-full bg-neutral-300" />}
+                                    <div className="flex w-full flex-row justify-between items-end">
+                                        <h4 className="font-medium text-xl">{item.name}</h4>
+                                        <p className="font-semibold text-2xl text-neutral-600">{item.type === "income" ? "+ " : "- "} Rp.{parseInt(item.amount, 10).toLocaleString("ID")}</p>
+                                    </div>
+                                    <p className="text-base font-normal self-start -mt-2">{item.description}</p>
+                                    <p className="text-sm font-normal text-neutral-400 self-end">
+                                        {(new Date(item.transaction_date)).toLocaleDateString("ID", {
                                             weekday: "long",
                                             day: "numeric",
                                             month: "long",

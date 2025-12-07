@@ -13,6 +13,8 @@ import { DialogDescription } from "@radix-ui/react-dialog";
 import { TrackerNavbar } from "@/components/TrackerNavbar";
 import { useParams } from "react-router-dom";
 import { DBaddincome, DBaddoutcome, DBgetalltransactions, DBgetonetracker } from "@/lib/db";
+import axios from "axios";
+import { ApiUrl } from "@/lib/variable";
 
 
 export function Tracker(): JSX.Element {
@@ -21,7 +23,7 @@ export function Tracker(): JSX.Element {
     const [ session, setSession ] = useState<"cloud" | "local" | null>(null)
     const [ data, setData ] = useState<any[]>()
     const [ chart, setChart ] = useState<any[]>([])
-    const [ trackerData, setTrackerData ] = useState<{ name: string; id: number; initialBalance: number } | null>(null)
+    const [ trackerData, setTrackerData ] = useState<{ name: string; id: number; initialBalance: number, current_balance: number } | null>(null)
     const [ isOut, setIsOut ] = useState<boolean>(false)
     const [ pendapatanUrl, setPendapatanUrl ] = useState<string | null>(null)
     const [ pengeluaranUrl, setPengeluaranUrl ] = useState<string | null>(null)
@@ -56,16 +58,31 @@ export function Tracker(): JSX.Element {
     }
     
     const cloudInitialize = async () => {
-        //
+        try {
+            const res = await axios.get(`${ApiUrl}/api/trackers/${id}`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("Authorization")}`
+                }
+            })
+
+            const data = await res.data
+
+            console.log("cloud initialize data fetch", data.data.tracker)
+            setData(data.data.tracker.transactions as any[])
+            setTrackerData(data.data.tracker)
+        } catch(err) {
+            console.log(err)
+            // add error catcher
+        }
     }
 
     //get the tracker data for local
-    const getTrackerData = async () => {
+    const getLocalTrackerData = async () => {
         try {
             if(id) {
                 const res = await DBgetonetracker(parseInt(id, 10))
                 console.log("tracker data", res)
-                setTrackerData(res as { name: string; id: number; initialBalance: number })
+                setTrackerData(res as { name: string; id: number; initialBalance: number, current_balance: number })
             }
         } catch(err) {
             console.log(err)
@@ -99,6 +116,29 @@ export function Tracker(): JSX.Element {
                     console.log(err)
                 }
             }
+
+            if(session === "cloud") {
+                try {
+                    const formData = new FormData()
+                    formData.append('name', judul)
+                    formData.append('type', 'income')
+                    formData.append('amount', cleanedBalance.toString())
+                    formData.append('description', desc)
+                    if(image) formData.append('image', image)
+                    formData.append('transaction_date', date.toISOString().slice(0, 19).replace('T', ' '))
+
+                    const res = await axios.post(`${ApiUrl}/api/trackers/${id}/transactions`, formData, {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem("Authorization")}`
+                        }
+                    })
+
+                    console.log(res)
+                    cloudInitialize()
+                } catch(err) {
+                    console.log(err)
+                }
+            }
         }
     }
 
@@ -120,12 +160,35 @@ export function Tracker(): JSX.Element {
                     console.log(err)
                 }
             }
+
+            if(session === "cloud") {
+                try {
+                    const formData = new FormData()
+                    formData.append('name', judul)
+                    formData.append('type', 'expense')
+                    formData.append('amount', cleanedBalance.toString())
+                    formData.append('description', desc)
+                    if(image) formData.append('image', image)
+                    formData.append('transaction_date', date.toISOString().slice(0, 19).replace('T', ' '))
+
+                    const res = await axios.post(`${ApiUrl}/api/trackers/${id}/transactions`, formData, {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem("Authorization")}`
+                        }
+                    })
+
+                    console.log(res)
+                    cloudInitialize()
+                } catch(err) {
+                    console.log(err)
+                }
+            }
         }
     }
 
     // parse data for transactions history (NEED IF ELSE FOR CLOUD TO WORK!) 
     const setBalanceHistory = async () => {
-        if(data) {
+        if(data && session === "local") {
             const splicedData = (data.sort((a, b) => b.date - a.date)).slice(0, 3) as {name: string, date: Date, desc: string, id: number, image: File, income: number, tracker_id: number, type: string}[]
 
             const clearedData: {name: string, date: string, amount: string}[] = []
@@ -133,7 +196,7 @@ export function Tracker(): JSX.Element {
                 // solve the date object to string
                 const year = item.date.getFullYear()
                 const month = item.date.getMonth()
-                const day = item.date.getDay()
+                const day = item.date.getDate()
                 const formattedDate = `${day}-${month}-${year}` 
 
                 // solve the outcome income format
@@ -145,14 +208,37 @@ export function Tracker(): JSX.Element {
                 setHistoryBalance(clearedData)
             });
         }
+
+        if(data && session === "cloud") {
+            const formattedData = data
+            
+            const slicedData = (formattedData.sort((a, b) => b.transaction_date - a.transaction_date)).slice(0, 3)
+            const clearedData: {name: string, date: string, amount: string}[] = []
+            slicedData.forEach((item) => {
+                // solve the date object to string
+                const year = item.transaction_date.getFullYear()
+                const month = item.transaction_date.getMonth()
+                const day = item.transaction_date.getDate()
+                const formattedDate = `${day}-${month}-${year}`
+                console.log(`${day}-${month}-${year}`, item.transaction_date)
+                
+                // solve the outcome income format
+                const type = item.type
+                const amount = parseInt(item.amount, 10)
+                const formattedAmount = type === "income" ? `+ Rp.${amount.toLocaleString("ID")}` : `- Rp.${amount.toLocaleString("ID")}`
+
+                clearedData.push({name: item.name, date: formattedDate, amount: formattedAmount})
+            })
+
+            setHistoryBalance(clearedData)
+        }
     }
 
     // parse data for report preview (NEED IF ELSE FOR CLOUD TO WORK!) 
     const setReportPreview = () => {
-        if(data) {
+        if(data && session === "local") {
             const sortData = (data.sort((a, b) => a.date - b.date)) as {name: string, date: Date, desc: string, id: number, image: File, income: number, tracker_id: number, type: string}[]
 
-            
             // variable for final income and outcome
             let income = 0
             let outcome = 0
@@ -174,17 +260,54 @@ export function Tracker(): JSX.Element {
             
             setReport({income: income, outcome: outcome, balance: balance})
         }
+
+        if(data && session === "cloud") {
+            const formattedData: any[] = [];
+            data.forEach((item) => {
+                const realDate = new Date(item.transaction_date)
+                item.transaction_date = realDate
+
+                return formattedData.push(item)
+            })
+            
+            formattedData.sort((a, b) => a.transaction_date - b.transaction_date)
+
+            // variable for final income and outcome
+            let income = 0
+            let outcome = 0
+            let balance = 0
+            
+            formattedData.forEach((item) => {
+                // solve the outcome income format
+                const type = item.type
+                const amount = parseInt(item.amount, 10)
+                
+                if(type === "income") {
+                    income += amount
+                    balance += amount
+                } else {
+                    outcome += amount
+                    balance -= amount
+                }
+            });
+
+            setReport({income: income, outcome: outcome, balance: balance})
+        }
     }
 
     useEffect(() => {
-        getTrackerData()
-        
         const session = localStorage.getItem("session")
         if(session === null) window.location.href = "/access"
         
         setSession(session as "cloud" | "local")
-        if(session === "cloud") cloudInitialize()
-        if(session === "local") localInitialize()
+        if(session === "cloud") {
+            cloudInitialize()
+        }
+
+        if(session === "local") {
+            localInitialize()
+            getLocalTrackerData()
+        }
     }, [])
     
     const getTimestampNow = () => {
@@ -202,59 +325,97 @@ export function Tracker(): JSX.Element {
     }
 
     useEffect(() => {
-        if(data) {
-            const defaultData = data.sort((a, b) => a.date - b.date)
-            let newBalance: number = trackerData?.initialBalance ?? 0;
-            // get the data
-            // 1. count the last balance
-            defaultData?.forEach((item) => {
-                console.log(item.income, item.type)
-                if(item.type === "income") newBalance += item.income ?? 0
-                if(item.type === "outcome") newBalance -= item.income ?? 0
-            });
-            setBalance(newBalance)
-        }
-        
-        // 2. build the chart
-        if(data) {
-            // sort the data from the newest
-            let sortedData = data.sort((a, b) => b.date - a.date)
-            console.log("sortedData", sortedData)
-            
-            // variable
-            let cuttedData = []
-
-            // get only 7 newest data
-            const dataLength = data.length
+        if(session === "local") {            
             if(data) {
-                if(data.length > 7) {
-                    cuttedData = data.slice(0, 7)
-                    console.log("sliced data")
-                    console.log("cuttedData", cuttedData, dataLength)
-                } else {
-                    console.log("no data sliced")
-                    cuttedData = sortedData
-                    console.log("cuttedData", sortedData)
-                }
+                const defaultData = data.sort((a, b) => a.date - b.date)
+                let newBalance: number = trackerData?.initialBalance ?? 0;
+                // get the data
+                // 1. count the last balance
+                defaultData?.forEach((item) => {
+                    console.log(item.income, item.type)
+                    if(item.type === "income") newBalance += item.income ?? 0
+                    if(item.type === "outcome") newBalance -= item.income ?? 0
+                });
+                setBalance(newBalance)
             }
             
-            
-            let balance = 0
-            const arrayBalance: {date: number, balance: number}[] = []
-
-            cuttedData = cuttedData.sort((a, b) => a.date - b.date)
-            cuttedData.forEach(item => {
-                if (item.type === "income") balance += item.income ?? 0
-                if (item.type === "outcome") balance -= item.income ?? 0
-
-                arrayBalance.push({
-                    date: new Date(item.date).getTime(),
-                    balance: balance
+            // 2. build the chart
+            if(data) {
+                // sort the data from the newest
+                let sortedData = data.sort((a, b) => b.date - a.date)
+                console.log("sortedData", sortedData)
+                
+                // variable
+                let cuttedData = []
+    
+                // get only 7 newest data
+                const dataLength = data.length
+                if(data) {
+                    if(data.length > 7) {
+                        cuttedData = data.slice(0, 7)
+                        console.log("sliced data")
+                        console.log("cuttedData", cuttedData, dataLength)
+                    } else {
+                        console.log("no data sliced")
+                        cuttedData = sortedData
+                        console.log("cuttedData", sortedData)
+                    }
+                }
+                
+                
+                let balance = 0
+                const arrayBalance: {date: number, balance: number}[] = []
+    
+                cuttedData = cuttedData.sort((a, b) => a.date - b.date)
+                cuttedData.forEach(item => {
+                    if (item.type === "income") balance += item.income ?? 0
+                    if (item.type === "outcome") balance -= item.income ?? 0
+    
+                    arrayBalance.push({
+                        date: new Date(item.date).getTime(),
+                        balance: balance
+                    })
                 })
-            })
-            console.log("array balance look up", arrayBalance)
+                console.log("array balance look up", arrayBalance)
+    
+                setChart(arrayBalance)
+            }
+        }
+        if(session === "cloud") {
+            if(data) {
+                setBalance(trackerData ? trackerData.current_balance : 0)
 
-            setChart(arrayBalance)
+                // set the transaction date to real date
+                const formattedData: any[] = []
+                data.forEach((item) => {
+                    const realDate = new Date(item.transaction_date)
+                    item.transaction_date = realDate
+
+                    return formattedData.push(item)
+                })
+                console.log("real date data", formattedData)
+
+                // sort data from the oldest
+                formattedData.sort((a, b) => a.transaction_date - b.transaction_date)
+                console.log("oldest to newest data", formattedData)
+
+                // build the chart
+                let balance = 0
+                const arrayBalance: {date: number, balance: number}[] = []
+    
+                formattedData.forEach(item => {
+                    if (item.type === "income") balance += parseInt(item.amount, 10) ?? 0
+                    if (item.type === "expense") balance -= parseInt(item.amount, 10) ?? 0
+    
+                    arrayBalance.push({
+                        date: item.transaction_date.getTime(),
+                        balance: balance
+                    })
+                })
+                console.log("array balance look up", arrayBalance)
+    
+                setChart(arrayBalance)
+            }
         }
     }, [data, trackerData])
 
@@ -273,7 +434,7 @@ export function Tracker(): JSX.Element {
     } satisfies ChartConfig
 
     return (
-        <section className="flex flex-col items-center">
+        <section className="flex flex-col items-center md:max-w-[650px]">
             <TrackerNavbar setIsOut={setIsOut} isOut={isOut} backLink="/app" trackerName={trackerData?.name ?? ""} />
             <AnimatePresence>
                 {!isOut && <motion.div
