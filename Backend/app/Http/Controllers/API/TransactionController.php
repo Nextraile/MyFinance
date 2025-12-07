@@ -13,6 +13,7 @@ use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
 
 class TransactionController extends Controller
@@ -88,9 +89,21 @@ class TransactionController extends Controller
         try {
             $transaction = $request->all();
 
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $name = time() . '_' . preg_replace('/\s+/', '_', $file->getClientOriginalName());
+            $filePath = $file->storeAs('transactions/'.'user-id_'.$request->user()->id.'/tracker-id_'.$request->route('tracker')->id, $name, 'public');
+            $image = url(Storage::url($filePath));
+        } else {
+            $image = null;
+        }
+            $transaction['image'] = $filePath;
+
             DB::transaction(function () use ($tracker, &$transaction) {
                 return $tracker->transactions()->create($transaction);
             });
+            
+            $transaction['image'] = $image;
 
             return ResponseHelper::createdResponse(
                 ['transaction' => $transaction],
