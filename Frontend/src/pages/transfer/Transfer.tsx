@@ -8,8 +8,6 @@ import { Button } from "@/components/ui/button";
 import { TransferTrackerItem } from "@/components/TransferTrackerItem";
 import { OrbitProgress } from "react-loading-indicators"; 
 import { DBdelete } from "@/lib/db";
-import { fa } from "zod/v4/locales";
-
 
 export function Transfer(): JSX.Element {
     const [ isTransfer, setIsTransfer ] = useState<boolean>(false)
@@ -51,7 +49,7 @@ export function Transfer(): JSX.Element {
         }, 3000)
         
         try {
-            const res = await DBdelete()
+            await DBdelete()
             setIsFailed(true)
         } catch (err) {
             setIsFailed(false)

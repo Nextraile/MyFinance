@@ -1,9 +1,7 @@
 import { useEffect, useState, type JSX } from "react";
-import { AnimatePresence, motion, MotionConfig, spring, useScroll } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft, faArrowRightFromBracket, faDollar, faFilter, faLock, faMinus, faQuestion, faSadTear, faSun, faTriangleExclamation, faUserPen } from "@fortawesome/free-solid-svg-icons";
-import { userData } from "@/lib/userData";
-import { XIcon } from "lucide-react";
+import { faDollar, faQuestion, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -11,8 +9,6 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { TrackerNavbar } from "@/components/TrackerNavbar";
 import { useParams } from "react-router-dom";
 import { DBgetalltransactions, DBgetonetracker } from "@/lib/db";
-import { parse } from "date-fns";
-import { faSadCry } from "@fortawesome/free-regular-svg-icons";
 import axios from "axios";
 import { ApiUrl } from "@/lib/variable";
 
@@ -23,8 +19,8 @@ export function Report(): JSX.Element {
     const [ data, setData ] = useState<any[]>()
     const [ displayData, setDisplayData ] = useState<{income: number, outcome: number, incomePercentage: number, outcomePercentage: number, chartData: any[], highestIncome: number | null, highestOutcome: number | null, transactionsHistory: any[]}>({income: 0, outcome: 0, incomePercentage: 0, outcomePercentage: 0, chartData: [], highestIncome: null, highestOutcome: null, transactionsHistory: []})
     const [ historyData, setHistoryData ] = useState<any[]>([])
-    const [ theme, setTheme ] = useState<"light" | "dark" | "system">("system")
-    const [ trackerData, setTrackerData ] = useState<{ name: string; id: number; initialBalance: number } | null>(null)
+    const [ _theme, setTheme ] = useState<"light" | "dark" | "system">("system")
+    const [ _trackerData, setTrackerData ] = useState<{ name: string; id: number; initialBalance: number } | null>(null)
 
     const [ range, setRange ] = useState<number>(7)
     const [ isOut, setIsOut ] = useState<boolean>(false)
@@ -93,7 +89,6 @@ export function Report(): JSX.Element {
             
             let sevenDaysIncome = 0
             let SevenDaysOutcome = 0
-            let SevenDaysBalance = 0 // unused, for now
             last7Days.forEach((item) => {
                 if(item.type === "income") sevenDaysIncome += item.income
                 if(item.type === "outcome") SevenDaysOutcome += item.income
@@ -104,7 +99,6 @@ export function Report(): JSX.Element {
 
             let sevenDaysBeforeIncome = 0
             let sevenDaysBeforeOutcome = 0
-            let sevenDaysBeforeBalance = 0 // unused, for now
             last7DaysBefore.forEach((item) => {
                 if(item.type === "income") sevenDaysBeforeIncome += item.income
                 if(item.type === "outcome") sevenDaysBeforeOutcome += item.income            
@@ -156,7 +150,6 @@ export function Report(): JSX.Element {
             
             let sevenDaysIncome = 0
             let SevenDaysOutcome = 0
-            let SevenDaysBalance = 0 // unused, for now
             last7Days.forEach((item) => {
                 if(item.type === "income") sevenDaysIncome += item.amount
                 if(item.type === "expense") SevenDaysOutcome += item.amount
@@ -169,7 +162,6 @@ export function Report(): JSX.Element {
 
             let sevenDaysBeforeIncome = 0
             let sevenDaysBeforeOutcome = 0
-            let sevenDaysBeforeBalance = 0 // unused, for now
             last7DaysBefore.forEach((item) => {
                 if(item.type === "income") sevenDaysBeforeIncome += item.amount
                 if(item.type === "expense") sevenDaysBeforeOutcome += item.amount            
@@ -223,7 +215,6 @@ export function Report(): JSX.Element {
             
             let thirtyDaysIncome = 0
             let thirtyDaysOutcome = 0
-            let thirtyDaysBalance = 0 // unused, for now
             last30Days.forEach((item) => {
                 if(item.type === "income") thirtyDaysIncome += item.income
                 if(item.type === "outcome") thirtyDaysOutcome += item.income
@@ -234,7 +225,6 @@ export function Report(): JSX.Element {
 
             let thirtyDaysBeforeIncome = 0
             let thirtyDaysBeforeOutcome = 0
-            let thirtyDaysBeforeBalance = 0 // unused, for now
             last30DaysBefore.forEach((item) => {
                 if(item.type === "income") thirtyDaysBeforeIncome += item.income
                 if(item.type === "outcome") thirtyDaysBeforeOutcome += item.income            
@@ -286,7 +276,6 @@ export function Report(): JSX.Element {
             
             let sevenDaysIncome = 0
             let SevenDaysOutcome = 0
-            let SevenDaysBalance = 0 // unused, for now
             last7Days.forEach((item) => {
                 if(item.type === "income") sevenDaysIncome += item.amount
                 if(item.type === "expense") SevenDaysOutcome += item.amount
@@ -299,7 +288,6 @@ export function Report(): JSX.Element {
 
             let sevenDaysBeforeIncome = 0
             let sevenDaysBeforeOutcome = 0
-            let sevenDaysBeforeBalance = 0 // unused, for now
             last7DaysBefore.forEach((item) => {
                 if(item.type === "income") sevenDaysBeforeIncome += item.amount
                 if(item.type === "expense") sevenDaysBeforeOutcome += item.amount            
@@ -353,7 +341,6 @@ export function Report(): JSX.Element {
             
             let oneYearIncome = 0
             let oneYearOutcome = 0
-            let oneYearBalance = 0 // unused, for now
             last1Year.forEach((item) => {
                 if(item.type === "income") oneYearIncome += item.income
                 if(item.type === "outcome") oneYearOutcome += item.income
@@ -364,7 +351,6 @@ export function Report(): JSX.Element {
 
             let oneYearBeforeIncome = 0
             let oneYearBeforeOutcome = 0
-            let oneYearBeforeBalance = 0 // unused, for now
             last1YearBefore.forEach((item) => {
                 if(item.type === "income") oneYearBeforeIncome += item.income
                 if(item.type === "outcome") oneYearBeforeOutcome += item.income            
@@ -416,7 +402,6 @@ export function Report(): JSX.Element {
             
             let sevenDaysIncome = 0
             let SevenDaysOutcome = 0
-            let SevenDaysBalance = 0 // unused, for now
             last7Days.forEach((item) => {
                 if(item.type === "income") sevenDaysIncome += item.amount
                 if(item.type === "expense") SevenDaysOutcome += item.amount
@@ -429,7 +414,6 @@ export function Report(): JSX.Element {
 
             let sevenDaysBeforeIncome = 0
             let sevenDaysBeforeOutcome = 0
-            let sevenDaysBeforeBalance = 0 // unused, for now
             last7DaysBefore.forEach((item) => {
                 if(item.type === "income") sevenDaysBeforeIncome += item.amount
                 if(item.type === "expense") sevenDaysBeforeOutcome += item.amount            

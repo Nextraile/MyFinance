@@ -1,25 +1,22 @@
 import { Input } from "@/components/ui/input";
-import { userData } from "@/lib/userData";
-import { faArrowRightFromBracket, faCloud, faEllipsisV, faHamburger, faLock, faMagnifyingGlass, faMoneyBill, faMoneyBillWave, faQuestion, faSun, faTrash, faUserPen } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRightFromBracket, faCloud, faEllipsisV, faLock, faMagnifyingGlass, faMoneyBillWave, faQuestion, faUserPen } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { PlusIcon, XIcon } from "lucide-react";
 import { useEffect, useRef, useState, type JSX } from "react";
-import { motion, AnimatePresence, spring, easeOut } from "motion/react";
-import { useLoaderData, useRouteLoaderData } from "react-router-dom";
+import { motion, AnimatePresence, spring } from "motion/react";
+import { useRouteLoaderData } from "react-router-dom";
 import { faTrashAlt, faUser } from "@fortawesome/free-regular-svg-icons";
 import { ApiUrl, StorageUrl } from "@/lib/variable";
 import axios, { isAxiosError } from "axios";
 import { DBcreatetracker, DBgetalltrackers } from "@/lib/db";
-import { ContextMenu, ContextMenuContent, ContextMenuItem } from "@/components/ui/context-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ModeToggle } from "@/components/mode-toggle";
 
 export function Dashboard(): JSX.Element {
     const mainLoaderData = useRouteLoaderData("main")
-    const loaderData = useLoaderData<[any]>()
     
     const [ trackers, setTrackers ] = useState<{id: number, user_id: number, description: string, initial_balance: number, name: string, transactions: {amount: number, type: "income" | "expense"}[]}[] | []>([])
-    const [ user, setUser ] = useState<any[]>([])
+    const [ _user, setUser ] = useState<any[]>([])
     const [ isAccountOpen, setIsAccountOpen ] = useState<boolean>(false)
     const [ isCreateBoxOpen, setIsCreateBoxOpen ] = useState<boolean>(false)
     const [ isOut, setIsOut ] = useState<boolean>(false)
@@ -99,7 +96,7 @@ export function Dashboard(): JSX.Element {
     
             if(session === "local") {
                 try {
-                    const res = await DBcreatetracker(name, desc, cleanedBalance)
+                    await DBcreatetracker(name, desc, cleanedBalance)
                     setIsCreateBoxOpen(false)
                     console.log("created!")
                     // get the tracker and render!
@@ -144,7 +141,7 @@ export function Dashboard(): JSX.Element {
 
     const signout = async () => {
         try {
-            const res = await axios.post(`${ApiUrl}/api/auth/logout`, {}, {
+            await axios.post(`${ApiUrl}/api/auth/logout`, {}, {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("Authorization")}`
                 }
