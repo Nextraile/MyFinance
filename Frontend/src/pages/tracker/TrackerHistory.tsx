@@ -1,7 +1,7 @@
 import { useEffect, useState, type JSX } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faFilter, faQuestion } from "@fortawesome/free-solid-svg-icons";
+import { faEllipsisV, faFilter, faQuestion } from "@fortawesome/free-solid-svg-icons";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -10,6 +10,8 @@ import { DBgetalltransactions } from "@/lib/db";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import { ApiUrl } from "@/lib/variable";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { faTrashAlt } from "@fortawesome/free-regular-svg-icons";
 
 export function TrackerHistory(): JSX.Element {
     const { id } = useParams()
@@ -120,6 +122,20 @@ export function TrackerHistory(): JSX.Element {
         getData()
     }, [page, direction, showPlus, showwMinus])
 
+    const deleteTransaction = async (transactionId: number) => {
+        console.log(id)
+        try {
+            const res = await axios.delete(`${ApiUrl}/api/trackers/${id}/transactions`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("Authorization")}`
+                }
+            })
+            getData()
+        } catch(err) {
+            console.log(err)
+        }
+    }
+
     return (
         <section className="flex flex-col items-center w-full md:max-w-[650px]">
             <TrackerNavbar trackerName="My New Navbar" setIsOut={setIsOut} isOut={isOut} backLink={`/app/tracker/${id}`}  />
@@ -224,6 +240,19 @@ export function TrackerHistory(): JSX.Element {
                                             </div>
                                         </div>
                                         <div className="self-end flex-1 font-normal text-xs text-neutral-500">{(new Date(item.transaction_date)).getDate()}-{(new Date(item.transaction_date)).getMonth()}-{(new Date(item.transaction_date)).getFullYear()}</div>
+                                        <Popover>
+                                            <PopoverTrigger className="w-3 -translate-x-2 self-start" onClick={(e) => e.stopPropagation()}>
+                                                <FontAwesomeIcon icon={faEllipsisV} className="text-black/60 dark:text-white/60" />
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-fit px-0 py-2 dark:bg-neutral-800/60 backdrop-blur-xs">
+                                                <motion.div 
+                                                    className="flex items-center gap-1 px-3"
+                                                >
+                                                    <FontAwesomeIcon icon={faTrashAlt} />
+                                                    <p className="font-medium text-base" onClick={(e) => {e.stopPropagation(); deleteTransaction(item.id)}}>Delete</p>
+                                                </motion.div>
+                                            </PopoverContent>
+                                        </Popover>
                                     </div>
                                 </DialogTrigger>
                                 <DialogContent className="w-full flex flex-col items-center bg-background-primary/90 dark:bg-background-primary-dark/50 backdrop-blur-xl">

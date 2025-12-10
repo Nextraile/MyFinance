@@ -268,4 +268,29 @@ export async function DBaddoutcome(name: string, desc: string | null, image: Fil
         request.onerror = () => reject("DB Error!")
     })   
 }
+
+export async function DBdeletetransaction(trackerId: number) {
+    return new Promise((resolve, reject) => {
+        let request = indexedDB.open("MyFinance", DB_VERSION)
+
+        request.onsuccess = (e) => {
+            const req = e.target as IDBOpenDBRequest
+            const db = req.result
+
+            const transaction = db.transaction("trackers", "readwrite")
+            const trackersStore = transaction.objectStore("trackers")
+
+            const deleteReq = trackersStore.delete(trackerId)
+            deleteReq.onsuccess = () => {
+                db.close()
+                resolve(deleteReq.result)
+            }
+            deleteReq.onerror = () => {
+                db.close()
+                reject("delete req error")
+            }
+        }
+        request.onerror = () => reject("DB Error!")    
+    })
+}
 // dont forget to close the connection
