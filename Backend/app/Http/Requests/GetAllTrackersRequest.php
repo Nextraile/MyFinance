@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Helpers\ResponseHelper;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class GetAllTrackersRequest extends FormRequest
 {
@@ -11,7 +14,7 @@ class GetAllTrackersRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user() !== null;
+        return true;
     }
 
     /**
@@ -24,5 +27,15 @@ class GetAllTrackersRequest extends FormRequest
         return [
             //
         ];
+    }
+
+    /**
+     * Handle a failed validation attempt.
+     */
+    protected function failedValidation(Validator $validator)
+    {
+        throw new HttpResponseException(
+            ResponseHelper::validationErrorResponse($validator)
+        );
     }
 }

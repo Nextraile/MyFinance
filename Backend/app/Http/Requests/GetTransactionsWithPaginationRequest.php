@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Helpers\ResponseHelper;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class GetTransactionsWithPaginationRequest extends FormRequest
 {
@@ -11,7 +14,7 @@ class GetTransactionsWithPaginationRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user() !== null && $this->user()->id === $this->route('tracker')->user_id;
+        return $this->user()->id === $this->route('tracker')->user_id;
     }
 
     /**
@@ -34,5 +37,15 @@ class GetTransactionsWithPaginationRequest extends FormRequest
             'order' => $this->get('order', 'desc'),
             'type' => $this->get('type', null),
         ]);
+    }
+
+    /**
+     * Handle a failed validation attempt.
+     */
+    protected function failedValidation(Validator $validator)
+    {
+        throw new HttpResponseException(
+            ResponseHelper::validationErrorResponse($validator)
+        );
     }
 }

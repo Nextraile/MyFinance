@@ -18,7 +18,7 @@ class StoreTransactionRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user() !== null;
+        return true;
     }
 
     /**
@@ -33,7 +33,7 @@ class StoreTransactionRequest extends FormRequest
             'type' => ['required', Rule::in(['income', 'expense'])],
             'amount' => 'required|numeric|min:0.01',
             'description' => 'nullable|string|max:255',
-            'image' => 'nullable|image|max:102400', // max 100MB
+            'image' => 'nullable|image|max:10240', // max 10MB
             'transaction_date' => 'required|date',
         ];
     }

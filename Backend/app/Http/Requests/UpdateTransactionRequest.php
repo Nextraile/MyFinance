@@ -14,7 +14,7 @@ class UpdateTransactionRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user() !== null;
+        return true;
     }
 
     /**
@@ -41,24 +41,6 @@ class UpdateTransactionRequest extends FormRequest
         return [];
     }
 
-    protected function prepareForValidation()
-    {
-        if ($this->hasFile('image')) {
-            $file = $this->file('image');
-            $name = time() . '_' . preg_replace('/\s+/', '_', $file->getClientOriginalName());
-            $file->storeAs('transactions/'.'user_id:'.$this->user()->id.'/tracker_id:'.$this->route('tracker')->id, $name, 'public');
-            $image = 'transactions/'.'user_id:'.$this->user()->id. '/tracker_id:' . $this->route('tracker')->id . '/' . $name;
-        } else {
-            $image = null;
-        }
-
-        $this->merge([
-            'user_id' => $this->user()->id,
-            'tracker_id' => $this->route('tracker')->id,
-            'image' => $image,
-            'transaction_date' => date('Y-m-d', strtotime($this->transaction_date)),
-        ]);
-    }
     /**
      * Handle a failed validation attempt.
      */

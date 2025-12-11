@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Helpers\ResponseHelper;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class GetTransactionsByRangeRequest extends FormRequest
 {
@@ -11,7 +14,7 @@ class GetTransactionsByRangeRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user() !== null && $this->user()->id === $this->route('tracker')->user_id;
+        return $this->user()->id === $this->route('tracker')->user_id;
     }
 
     /**
@@ -36,5 +39,15 @@ class GetTransactionsByRangeRequest extends FormRequest
             'end_date.date' => 'The end date must be a valid date.',
             'end_date.after_or_equal' => 'The end date must be a date after or equal to the start date.',
         ];
+    }
+
+    /**
+     * Handle a failed validation attempt.
+     */
+    protected function failedValidation(Validator $validator)
+    {
+        throw new HttpResponseException(
+            ResponseHelper::validationErrorResponse($validator)
+        );
     }
 }
