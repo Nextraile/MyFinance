@@ -32,14 +32,6 @@ class DeleteTrackerRequest extends FormRequest
         ];
     }
 
-    protected function prepareForValidation()
-    {
-        $this->merge([
-            'user_id' => $this->user()->id,
-            'tracker_id' => $this->route('tracker')->id,
-        ]);
-    }
-
     /**
      * Handle a failed validation attempt.
      */
