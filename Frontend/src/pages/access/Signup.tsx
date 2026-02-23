@@ -73,7 +73,12 @@ export function Signup(): JSX.Element {
                 password: values.password,
                 password_confirmation: values.password
             })
-
+            console.log("outbound data:", {
+                name: values.username,
+                email: values.email,
+                password: values.password,
+                password_confirmation: values.password
+            })
             const data = await res.data
             console.log(data.data.token)
             if(data.data.token) {
@@ -94,13 +99,13 @@ export function Signup(): JSX.Element {
                 if(status === 422) {
                     const errors = err.response?.data.errors
                     console.log(err.response?.data.errors)
-                    if (errors.password) {
+                    if (errors?.password) {
                         setIsPasswordError(true)
                     }
-                    if(errors.name) {
+                    if(errors?.name) {
                         setIsNameError(true)
                     }
-                    if(errors.email) {
+                    if(errors?.email) {
                         setIsEmailError(true)
                     }
                 } else {
@@ -207,7 +212,7 @@ export function Signup(): JSX.Element {
                             >
                                 <Alert variant="destructive" className="w-full bg-background-primary dark:bg-background-primary-dark">
                                     <AlertCircleIcon />
-                                    <AlertTitle className="font-semibold tracking-normal">Sign In Failed</AlertTitle>
+                                    <AlertTitle className="font-semibold tracking-normal">Sign Up Failed</AlertTitle>
                                     <AlertDescription>
                                         <ul className="list-inside list-disc text-sm">
                                         {isNameError && 

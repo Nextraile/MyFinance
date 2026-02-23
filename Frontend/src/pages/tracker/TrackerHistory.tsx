@@ -243,7 +243,7 @@ export function TrackerHistory(): JSX.Element {
                                                 <p className="font-semibold text-base">{item.type === "income" ? "+ " : "- "} Rp.{parseInt(item.amount, 10).toLocaleString("ID")}</p>
                                             </div>
                                         </div>
-                                        <div className="self-end flex-1 font-normal text-xs text-neutral-500">{item.date.toLocaleDateString("ID", {
+                                        <div className="self-end flex-1 font-normal text-xs text-neutral-500">{new Date(item.transaction_date).toLocaleDateString("ID", {
                                             day: "numeric",
                                             month: "numeric",
                                             year: "numeric"
