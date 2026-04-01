@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers;
 
 use App\Helpers\ResponseHelper;
-use App\Http\Controllers\API\Controller;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\DeleteAvatarRequest;
 use App\Http\Requests\UpdateAvatarRequest;
 use Illuminate\Http\JsonResponse;
