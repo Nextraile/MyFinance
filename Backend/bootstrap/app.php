@@ -12,6 +12,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
+        commands: __DIR__.'/../routes/console.php',
         using: function () {
             // Route::middleware('web')->group(base_path('routes/web.php'));
             Route::middleware('api')->prefix('api')->group(base_path('routes/api.php'));
@@ -23,9 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
                     'message' => 'API endpoint not found'
                 ], 404);
             });
-        },
-        commands: __DIR__.'/../routes/console.php',
-        health: '/api/up',
+        }
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->api(prepend: [
