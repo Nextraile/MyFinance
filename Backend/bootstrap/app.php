@@ -13,15 +13,9 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         using: function () {
-            Route::middleware('web')->group(base_path('routes/web.php'));
-
-            $apiPath = base_path('routes/API');
-
-            foreach (glob("$apiPath/V*/EntryPoint.php") as $file) {
-                $versionPrefix = strtolower(basename(dirname($file)));
-                Route::middleware('api')->prefix("api/$versionPrefix")->group($file);
-            }
-
+            // Route::middleware('web')->group(base_path('routes/web.php'));
+            Route::middleware('api')->prefix('api')->group(base_path('routes/api.php'));
+            
             Route::fallback(function () {
                 return response()->json([
                     'response_code' => 404,
@@ -30,7 +24,6 @@ return Application::configure(basePath: dirname(__DIR__))
                 ], 404);
             });
         },
-
         commands: __DIR__.'/../routes/console.php',
         health: '/api/up',
     )
