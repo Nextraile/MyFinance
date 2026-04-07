@@ -81,7 +81,7 @@ class ResponseHelper
     // }
 
     public static function internalServerErrorResponse(
-        \Exception $exception,
+        \Throwable $exception,
         string $context,
         string $message = 'An error occurred.',
     ): JsonResponse {
