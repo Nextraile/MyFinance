@@ -4,10 +4,11 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
-use App\Notifications\API\ResetPasswordNotification;
+use App\Notifications\API\V1\ResetPasswordNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Password;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -49,8 +50,18 @@ class User extends Authenticatable
         ];
     }
 
+    public function createPasswordResetToken()
+    {
+        return Password::broker()->createToken($this);
+    }
+
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new ResetPasswordNotification($token));
+    }
+
+    public function validatePasswordResetToken($token)
+    {
+        return Password::broker()->tokenExists($this, $token);
     }
 }
