@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\API\V1\TransactionController;
 use Illuminate\Support\Facades\Route;
 
 Route::controller(TransactionController::class)->group(function () {
