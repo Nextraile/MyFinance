@@ -6,6 +6,7 @@ use Illuminate\Bus\Queueable;
 // use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Crypt;
 
 class ResetPasswordNotification extends Notification
 {
@@ -41,10 +42,10 @@ class ResetPasswordNotification extends Notification
         // 'email' => $notifiable->email
         // ]);
 
-        $url = config('app.frontend_url') . '/auth/password-resets?' . http_build_query([
+        $url = config('app.frontend_url') . '/auth/password-resets?credentials=' . Crypt::encrypt(http_build_query([
             'token' => $this->token,
             'email' => $notifiable->email
-        ]);
+        ]));
 
     return (new MailMessage)
         ->subject('Reset Your Password - ' . config('app.name'))

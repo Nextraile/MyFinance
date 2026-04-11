@@ -4,6 +4,7 @@ namespace App\Http\Requests\API\V1\User\Auth;
 
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
@@ -41,12 +42,18 @@ class ResetPasswordRequest extends FormRequest
         ];
     }
 
-    /**
-     * Get custom messages for validator errors.
-     */
-    public function messages()
+    public function prepareForValidation()
     {
-        return [];
+        if (!$this->input('credentials')) {
+            throw new UnprocessableEntityHttpException('Invalid credentials');
+        }
+
+        $encodedData = Crypt::decrypt($this->credentials);
+        $decodedData = [];
+
+        parse_str($encodedData, $decodedData);
+        
+        $this->merge($decodedData);
     }
 
     public function passedValidation()
