@@ -9,6 +9,7 @@ use App\Http\Requests\API\V1\User\Auth\RegisterRequest;
 use App\Http\Requests\API\V1\User\Auth\ResetPasswordRequest;
 use App\Http\Requests\API\V1\User\Auth\ValidatePasswordResetTokenRequest as ValidateResetTokenRequest;
 use App\Models\User;
+use App\Notifications\API\V1\ResetPasswordNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
 
@@ -66,9 +67,9 @@ class UserController extends Controller
     {
         $user = $request['user'];
 
-        $token = $user->createPasswordResetToken();
+        $token = Password::broker()->createToken($user);
 
-        $user->sendPasswordResetNotification($token);
+        $user->notify(new ResetPasswordNotification($token));
 
         return ResponseHelper::successResponse(
             message: 'Password reset token has been generated and sent to email.'
