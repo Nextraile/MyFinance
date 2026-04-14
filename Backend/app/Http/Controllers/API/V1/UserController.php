@@ -10,15 +10,24 @@ use App\Http\Requests\API\V1\User\Auth\ResetPasswordRequest;
 use App\Http\Requests\API\V1\User\Auth\ValidatePasswordResetTokenRequest as ValidateResetTokenRequest;
 use App\Http\Requests\API\V1\User\Auth\Verification\Email\SendVerificationEmailRequest;
 use App\Http\Requests\API\V1\User\Auth\Verification\Email\VerifyEmailRequest;
+use App\Http\Requests\API\V1\User\UpdateProfileRequest;
 use App\Models\User;
 use App\Notifications\API\V1\User\Auth\ResetPasswordNotification;
 use App\Notifications\API\V1\User\Auth\VerificationEmailNotification;
+use App\Notifications\API\V1\User\Auth\Verified\CredentialsChangesNotification;
+use App\Notifications\API\V1\User\Auth\Verified\NewDeviceLoginDetectedNotification;
+use App\Notifications\API\V1\User\Auth\Verified\VerifiedEmailChangedNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Storage;
+
 
 class UserController extends Controller
 {
-    // AUTHENTICATION
+    /**
+     * AUTHENTICATION
+     */
 
     // Sign Up
     public function store(RegisterRequest $request)
@@ -50,8 +59,8 @@ class UserController extends Controller
                 'token' => $token,
                 'token_type' => 'Bearer',
                 'expires_in' => config('sanctum.expiration'),
-            ],
-            message: 'User logged in successfully.'
+                ];,
+            message: $message ?? 'User logged in successfully.'
         );
     }
 
@@ -79,16 +88,28 @@ class UserController extends Controller
     public function resetPassword(ResetPasswordRequest $request)
     {
         $credentials = $request->validated();
-        // $user = $request['user'];
 
-        Password::broker()->reset(
-            $credentials,
-            function ($user, $password) {
-                $user->forceFill([
-                    'password' => $password
-                ])->save();
-            }
-        );
+        try {
+
+            DB::transaction(function () use ($credentials) {
+                Password::broker()->reset(
+                    $credentials,
+                    function ($user, $password) {
+                        $user->forceFill([
+                            'password' => $password
+                        ])->save();
+                    }
+                );
+
+                // Invalidate all existing tokens after password reset
+                $user = User::where('email', $credentials['email'])->first();
+                $user->tokens()->where('id', '!=', $user->currentAccessToken()->id)->delete();
+                $user->notify(new CredentialsChangesNotification());
+            });
+        
+        } catch (\Exception $e) {
+            throw $e;
+        }
 
         return ResponseHelper::successResponse(
             message: 'Password has been reset successfully.'
@@ -105,11 +126,15 @@ class UserController extends Controller
         );
     }
 
-    // USER MANAGEMENT
+    /**
+     * USER MANAGEMENT
+     */
 
     // Get User Data
-    public function show(User $user)
+    public function show(Request $request)
     {
+        $user = $request->user();
+
         return ResponseHelper::successResponse(
             data: [
                 'user' => [
@@ -124,18 +149,105 @@ class UserController extends Controller
         );
     }
 
-    // // Update User Data
-    // public function update(Request $request, User $user)
-    // {
-    //     $validatedData = $request->validated();
+    // Update User Data
+    public function update(UpdateProfileRequest $request)
+    {
+        $credentials = $request->validated();
+        $user = $request->user();
+        $message = null;
 
-    //     $user->update($validatedData);
+        try {
 
-    //     return ResponseHelper::successResponse(
-    //         data: [ 'user' => $user ],
-    //         message: 'User data updated successfully.'
-    //     );
-    // }
+            DB::transaction(function () use ($request, $credentials, $user, &$message) {
+
+                /**
+                 * If the request has 'change_and_verify_email' which value is true,
+                 * and the user of request has pending_email which value is not null,
+                 * and hash check shows that both hash is the same and valid
+                 * 
+                 * move the pending email to email,
+                 * removed the pending email,
+                 * then mark the new email as verified
+                 */
+
+                // Handle email change and verification if the request is only for email change verification
+                if ($request->routeIs('api.v1.users.update.verify.new-email')) {
+                    $user->email = $user->pending_email;
+                    $user->pending_email = null;
+                    $user->markEmailAsVerified();
+                    $user->tokens()->where('id', '!=', $user->currentAccessToken()->id)->delete();
+                    $user->notify(new CredentialsChangesNotification());
+
+                    $message = 'Email updated and verified successfully.';
+
+                    return;
+                }
+
+                /** If user has been verified and email is being updated,
+                 *  store the new email into pending email,
+                 *  remove email from credentials to prevent it from being updated,
+                 *  and send verification email to the new email address.
+                 * 
+                 *  everything will be updated except the email until the new email is verified,
+                 *  then the pending email will be moved to email and get removed,
+                 *  and the new email will be verified.
+                 */
+
+                // Handle email change request if the user is already verified and wants to change email
+                if ($user->email_verified_at &&
+                    !empty($credentials['email']) &&
+                    $credentials['email'] !== $user->getEmailForVerification()) {
+                        $user->pending_email = $credentials['email'];
+                        unset($credentials['email']);
+                        $user->notify(new VerifiedEmailChangedNotification($user->pending_email));
+                        $message = 'Please verify your new email address to finish the process.';
+                }
+
+                /**
+                 * Sort the data to be updated,
+                 * only include the fields that are present in the request and not empty.
+                 */
+
+                $data = collect($credentials)
+                    ->only(['name', 'email', 'password'])
+                    ->filter(function ($value) {
+                        return !empty($value);
+                    })
+                    ->toArray();
+
+                // Handle avatar upload if the request has avatar file
+                if ($request->hasFile('avatar')) {
+                    $oldAvatar = $user->avatar;
+                    $newAvatar = $request->file('avatar');
+
+                    $avatarName = time() . '.' . $newAvatar->getClientOriginalExtension();
+                    $newAvatar->storeAs('users/avatars', $avatarName, 'public');
+                    $data['avatar'] = $avatarName;
+
+                    if (!empty($oldAvatar) &&
+                        Storage::disk('public')->exists('users/avatars/' . $oldAvatar)) {
+                            Storage::disk('public')->delete('users/avatars/' . $oldAvatar);
+                    }
+                }
+
+                $user->update($data);
+                
+                // Invalidate all existing tokens after credentials change except the current token
+                if (isset($credentials['password'])) {
+                    $user->tokens()->where('id', '!=', $user->currentAccessToken()->id)->delete();
+                    $user->notify(new CredentialsChangesNotification());
+                }
+            });
+
+            return ResponseHelper::successResponse(
+                data: ['user' => $user->fresh()],
+                message: $message ?? 'User data updated successfully.'
+            );
+
+        } catch (\Exception $e) {
+            throw $e;
+        }
+    }
 
     // Email Verification
     public function sendVerificationEmail(SendVerificationEmailRequest $request)
@@ -160,13 +272,13 @@ class UserController extends Controller
         );
     }
 
-    // // Delete User
-    // public function destroy(User $user)
-    // {
-    //     $user->delete();
+    // Delete User
+    public function destroy(Request $request)
+    {
+        $request->user()->delete();
 
-    //     return ResponseHelper::successResponse(
-    //         message: 'User data deleted successfully.'
-    //     );
-    // }
+        return ResponseHelper::successResponse(
+            message: 'User data deleted successfully.'
+        );
+    }
 }

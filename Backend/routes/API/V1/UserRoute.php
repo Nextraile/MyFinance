@@ -33,7 +33,8 @@ Route::controller(UserController::class)->group(function () {
     Route::prefix('users/profile')->name('users.')->middleware('auth:sanctum')->group(function () {
         Route::get('/', 'show')->name('show');
         Route::patch('/', 'update')->name('update');
+        Route::get('/verify-new-email/{id}/{hash}', 'update')->middleware('signed')->name('update.verify.new-email'); // For email change verification
         Route::delete('/', 'destroy')->name('destroy');
-        Route::patch('/avatar', 'handleAvatar')->name('avatar');
+        // Route::patch('/avatar', 'handleAvatar')->name('avatar');
     });
 });

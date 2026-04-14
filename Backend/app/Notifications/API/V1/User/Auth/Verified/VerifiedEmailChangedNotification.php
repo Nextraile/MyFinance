@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Notifications\API\V1\User\Auth;
+namespace App\Notifications\API\V1\User\Auth\Verified;
 
 use Illuminate\Bus\Queueable;
 // use Illuminate\Contracts\Queue\ShouldQueue;
@@ -8,16 +8,16 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\URL;
 
-class VerificationEmailNotification extends Notification
+class VerifiedEmailChangedNotification extends Notification
 {
     use Queueable;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct()
+    public function __construct(public $newEmail)
     {
-        //
+        $this->newEmail = $newEmail;
     }
 
     /**
@@ -42,11 +42,11 @@ class VerificationEmailNotification extends Notification
 
         // Backend route with signed URL
         $url = URL::temporarySignedRoute(
-            'api.v1.auth.email.verify',
+            'api.v1.users.update.verify.new-email',
             now()->addMinutes(config('auth.verification.expire')),
             [
                 'id' => $notifiable->getKey(),
-                'hash' => sha1($notifiable->getEmailForVerification()),
+                'hash' => sha1($this->newEmail),
             ]
         );
         
@@ -54,7 +54,7 @@ class VerificationEmailNotification extends Notification
             ->subject('Verify Your Email Address - ' . config('app.name'))
             ->greeting('Hello!')
             ->line('You are receiving this email because we received an email verification request for your account.')
-            ->action('Verify Email', $url)
+            ->action('Verify New Email', $url)
             ->line('This verification link will expire in ' . config('auth.verification.expire') . ' minutes.')
             ->line('If you did not request an email verification, no further action is required.')
             ->salutation('Regards, ' . config('app.name'));
