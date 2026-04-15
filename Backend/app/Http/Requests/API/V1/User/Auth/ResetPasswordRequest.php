@@ -3,14 +3,13 @@
 namespace App\Http\Requests\API\V1\User\Auth;
 
 use Carbon\Carbon;
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
-class ResetPasswordRequest extends FormRequest
+class ResetPasswordRequest extends BaseRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -40,6 +39,13 @@ class ResetPasswordRequest extends FormRequest
                     ->symbols()
             ]
         ];
+    }
+
+    public function messages()
+    {
+        return array_merge(parent::messages(), [
+            //
+        ]);
     }
 
     public function prepareForValidation()

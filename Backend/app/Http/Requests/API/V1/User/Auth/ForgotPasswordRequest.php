@@ -3,9 +3,8 @@
 namespace App\Http\Requests\API\V1\User\Auth;
 
 use App\Models\User;
-use Illuminate\Foundation\Http\FormRequest;
 
-class ForgotPasswordRequest extends FormRequest
+class ForgotPasswordRequest extends BaseRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -32,7 +31,9 @@ class ForgotPasswordRequest extends FormRequest
      */
     public function messages()
     {
-        return [];
+        return array_merge(parent::messages(), [
+            //
+        ]);
     }
 
     public function passedValidation()
