@@ -17,6 +17,8 @@ use App\Notifications\API\V1\User\Auth\VerificationEmailNotification;
 use App\Notifications\API\V1\User\Auth\Verified\CredentialsChangesNotification;
 use App\Notifications\API\V1\User\Auth\Verified\NewDeviceLoginDetectedNotification;
 use App\Notifications\API\V1\User\Auth\Verified\VerifiedEmailChangedNotification;
+use App\Services\API\V1\AuthService;
+use App\Services\API\V1\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Password;
@@ -25,6 +27,12 @@ use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
+    public function __construct(protected AuthService $authService, protected UserService $userService)
+    {
+        $this->authService = $authService;
+        $this->userService = $userService;
+    }
+    
     /**
      * AUTHENTICATION
      */
@@ -51,43 +59,17 @@ class UserController extends Controller
     {
         $user = $request['user'];
 
-        if ($user->email_verified_at) {
-            $currentDeviceHash = hash('sha256', "$user->id|{$request->userAgent()}");
+        if ($this->authService->isVerified($user)) {
+            $currentDeviceHash = $this->authService->hashDevice($user->id, $request->userAgent());
             $devices = $user->known_devices ?? collect();
-            // $devices = collect($user->known_devices ?? []);
             $maxDevices = 5;
 
-            // If the current device is in the known devices list, update the last used timestamp
             if ($devices->contains('hash', $currentDeviceHash)) {
-                $devices = $devices->map(function ($device) use ($currentDeviceHash) {
-                    if ($device['hash'] === $currentDeviceHash) {
-                        $device['last_used_at'] = now();
-                    }
-                    return $device;
-                });
-                $user->known_devices = $devices->sortByDesc('last_used_at')->values()->all();
-                $user->save();
+                $this->authService->updateLastTimeDeviceUsed($user, $currentDeviceHash);
 
-            } 
-
-            /** 
-             * If the current device is not in the known devices list,
-             * and the required credentials are valid,
-             * and if the known devices list has reached the maximum limit,
-             * remove the least recently used device from the list,
-             * add the current device to the list
-             */
-
-            if (!$devices->contains('hash', $currentDeviceHash)) {
+            } else {
                 if ($request->routeIs('api.v1.auth.login.new-device')) {
-                    $devices = $devices->push([
-                        "hash" => $currentDeviceHash,
-                        "last_used_at" => now(),
-                    ]);
-
-                    $user->known_devices = $devices->sortByDesc('last_used_at')->take($maxDevices)->values();
-                    // dd($user->known_devices);
-                    $user->save();
+                    $this->authService->addDevice($user, $currentDeviceHash, $maxDevices);
 
                 } else {
                     $user->notify(new NewDeviceLoginDetectedNotification($currentDeviceHash));
@@ -96,8 +78,7 @@ class UserController extends Controller
                         message: 'New device login detected. Please check your email to continue.'
                     );
                 }
-            }
-                
+            }   
         }
 
         $token = $user->createToken('auth-token')->plainTextToken;
@@ -117,7 +98,7 @@ class UserController extends Controller
     {
         $user = $request['user'];
 
-        $token = Password::broker()->createToken($user);
+        $token = $this->authService->makePasswordResetToken($user);
 
         $user->notify(new ResetPasswordNotification($token));
 
@@ -136,25 +117,14 @@ class UserController extends Controller
     public function resetPassword(ResetPasswordRequest $request)
     {
         $credentials = $request->validated();
+        $user = User::where('email', $credentials['email'])->first();
 
         try {
 
-            DB::transaction(function () use ($credentials) {
-                Password::broker()->reset(
-                    $credentials,
-                    function ($user, $password) {
-                        $user->forceFill([
-                            'password' => $password
-                        ])->save();
-                    }
-                );
-
-                // Invalidate all existing tokens and known devices after password reset
-                $user = User::where('email', $credentials['email'])->first();
-
+            DB::transaction(function () use ($credentials, $user) {
+                $this->authService->updatePassword($credentials);
                 $user->tokens()->delete();
-                $user->known_devices = null;
-                $user->save();
+                $this->authService->unsetKnownDevices($user);
 
                 $user->notify(new CredentialsChangesNotification('password'));
             });
@@ -173,19 +143,6 @@ class UserController extends Controller
     {
         $user = $request->user();
         $user->currentAccessToken()->delete();
-        
-        // if ($user->email_verified_at && !empty($user->known_devices)) {
-        //     $currentDeviceHash = hash('sha256', "$user->id|{$request->userAgent()}");
-        //     $devices = $user->known_devices;
-
-        //     // Remove the current device from the known devices list upon logout
-        //     $devices = $devices->reject(function ($device) use ($currentDeviceHash) {
-        //         return $device['hash'] === $currentDeviceHash;
-        //     });
-
-        //     $user->known_devices = $devices->values()->all();
-        //     $user->save();
-        // }
 
         return ResponseHelper::successResponse(
             message: 'User logged out successfully.'
