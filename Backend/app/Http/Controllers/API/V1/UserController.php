@@ -11,6 +11,7 @@ use App\Http\Requests\API\V1\User\Auth\ValidatePasswordResetTokenRequest as Vali
 use App\Http\Requests\API\V1\User\Auth\Verification\Email\SendVerificationEmailRequest;
 use App\Http\Requests\API\V1\User\Auth\Verification\Email\VerifyEmailRequest;
 use App\Http\Requests\API\V1\User\UpdateProfileRequest;
+use App\Http\Resources\API\V1\UserResource;
 use App\Models\User;
 use App\Services\API\V1\AuthService;
 use App\Services\API\V1\UserService;
@@ -151,16 +152,21 @@ class UserController extends Controller
     {
         $user = $request->user();
 
+        // return ApiResponseHelper::successResponse(
+        //     data: [
+        //         'user' => [
+        //             'id' => $user->getKey(),
+        //             'name' => $user->name,
+        //             'email' => $user->email,
+        //             'is_verified' => $user->email_verified_at ? true : false,
+        //             'avatar' => $user->avatar ? asset('storage/avatars/' . $user->avatar) : null,
+        //         ],
+        //     ],
+        //     message: 'User data retrieved successfully.'
+        // );
+
         return ApiResponseHelper::successResponse(
-            data: [
-                'user' => [
-                    'id' => $user->getKey(),
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'is_verified' => $user->email_verified_at ? true : false,
-                    'avatar' => $user->avatar ? asset('storage/avatars/' . $user->avatar) : null,
-                ],
-            ],
+            data: new UserResource($user),
             message: 'User data retrieved successfully.'
         );
     }
