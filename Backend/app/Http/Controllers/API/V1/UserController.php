@@ -39,15 +39,15 @@ class UserController extends Controller
         $token = $user->createToken('auth-token')->plainTextToken;
 
         return ApiResponseHelper::successResponse(
-            message: 'User successfully registered.',
+            message: 'User registered successfully.',
             data: collect(new UserResource($user))->mergeRecursive([
                 'data' => [
                     'meta' => [
                         'token' => $token,
                         'token_type' => 'Bearer',
                         'expires_in' => config('sanctum.expiration'),
-                    ]
-                ]
+                    ],
+                ],
             ]),
         );
     }
@@ -74,7 +74,7 @@ class UserController extends Controller
                     // throw new NewDeviceLoginDetectedException();
 
                     return ApiResponseHelper::successResponse(
-                        message: 'New device login detected. Please check your email to continue.'
+                        message: 'New device login detected. Please check your email to continue.',
                     );
                 }
             }   
@@ -90,8 +90,8 @@ class UserController extends Controller
                         'token' => $token,
                         'token_type' => 'Bearer',
                         'expires_in' => config('sanctum.expiration'),
-                    ]
-                ]
+                    ],
+                ],
             ]),
         );
     }
@@ -106,14 +106,14 @@ class UserController extends Controller
         $this->authService->sendResetPasswordNotification($user, $token);
 
         return ApiResponseHelper::successResponse(
-            message: 'Password reset token has been generated and sent to email.'
+            message: 'Password reset token has been generated and sent to email.',
         );
     }
 
     public function validateResetToken(ValidateResetTokenRequest $request)
     {
         return ApiResponseHelper::successResponse(
-            message: 'Password reset token is valid.'
+            message: 'Password reset token is valid.',
         );
     }
 
@@ -136,7 +136,7 @@ class UserController extends Controller
         }
 
         return ApiResponseHelper::successResponse(
-            message: 'Password has been reset successfully.'
+            message: 'Password has been reset successfully.',
         );
     }
 
@@ -147,7 +147,7 @@ class UserController extends Controller
         $user->currentAccessToken()->delete();
 
         return ApiResponseHelper::successResponse(
-            message: 'User logged out successfully.'
+            message: 'User logged out successfully.',
         );
     }
 
@@ -161,8 +161,8 @@ class UserController extends Controller
         $user = $request->user();
 
         return ApiResponseHelper::successResponse(
+            message: 'User data retrieved successfully.',
             data: new UserResource($user),
-            message: 'User data retrieved successfully.'
         );
     }
 
@@ -229,8 +229,8 @@ class UserController extends Controller
             });
 
             return ApiResponseHelper::successResponse(
-                data: ['user' => $user->fresh()],
-                message: $message ?? 'User data updated successfully.'
+                message: $message ?? 'User data updated successfully.',
+                data: new UserResource($user),
             );
 
         } catch (\Exception $e) {
@@ -246,7 +246,7 @@ class UserController extends Controller
         $this->authService->sendVerificationEmailNotification($user);
 
         return ApiResponseHelper::successResponse(
-            message: 'Verification email sent successfully.'
+            message: 'Verification email sent successfully.',
         );
     }
 
@@ -259,7 +259,7 @@ class UserController extends Controller
         $user->markEmailAsVerified();
 
         return ApiResponseHelper::successResponse(
-            message: 'Email verified successfully.'
+            message: 'Email verified successfully.',
         );
     }
 
@@ -269,7 +269,7 @@ class UserController extends Controller
         $request->user()->delete();
 
         return ApiResponseHelper::successResponse(
-            message: 'User data deleted successfully.'
+            message: 'User data deleted successfully.',
         );
     }
 }
