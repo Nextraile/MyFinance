@@ -25,8 +25,12 @@ class ApiResponseHelper
             $response['timestamp'] = now()->toISOString();
         }
 
-        if (!empty($data) && method_exists($data, 'resolve')) {
-            $response += $data->resolve();
+        if (!empty($data)) {
+            match (true) {
+                method_exists($data, 'resolve') => $response += $data->resolve(),
+                method_exists($data, 'toArray') => $response += $data->toArray(),
+                default => $response['data'] = $data,
+            };
         }
 
         return response()->json($response, $statusCode);
