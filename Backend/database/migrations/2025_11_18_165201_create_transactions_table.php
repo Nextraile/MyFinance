@@ -22,6 +22,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->json('files')->nullable();
             $table->timestamp('transaction_date');
+            $table->softDeletes();
             $table->timestamps();
 
             $table->index(['tracker_id', 'transaction_date']);
