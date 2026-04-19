@@ -40,7 +40,7 @@ class UserController extends Controller
 
         return ApiResponseHelper::successResponse(
             message: 'User registered successfully.',
-            data: collect(new UserResource($user))->mergeRecursive([
+            data: collect(new UserResource($user->fresh()))->mergeRecursive([
                 'data' => [
                     'meta' => [
                         'token' => $token,
@@ -84,7 +84,7 @@ class UserController extends Controller
 
         return ApiResponseHelper::successResponse(
             message: 'User logged in successfully.',
-            data: collect(new UserResource($user))->mergeRecursive([
+            data: collect(new UserResource($user->fresh()))->mergeRecursive([
                 'data' => [
                     'meta' => [
                         'token' => $token,
@@ -230,7 +230,7 @@ class UserController extends Controller
 
             return ApiResponseHelper::successResponse(
                 message: $message ?? 'User data updated successfully.',
-                data: new UserResource($user),
+                data: new UserResource($user->fresh()),
             );
 
         } catch (\Exception $e) {
