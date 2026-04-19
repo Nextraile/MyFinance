@@ -8,6 +8,7 @@ use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
 class ApiExceptionHandler
@@ -30,7 +31,7 @@ class ApiExceptionHandler
     public static function getExceptionMessage(Throwable $e, int $statusCode): string
     {
         return match (true) {
-            $e instanceof ModelNotFoundException => 'Resource not found',
+            $e instanceof ModelNotFoundException || $e instanceof NotFoundHttpException => 'Resource not found',
             $e instanceof ValidationException => 'Validation failed',
             $e instanceof ThrottleRequestsException => 'Too many requests. Please try again later.',
             $statusCode >= 500 => config('app.debug') ? $e->getMessage() : 'Server error',
