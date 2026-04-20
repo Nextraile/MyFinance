@@ -17,7 +17,7 @@ class UserResource extends BaseResource
 
     public $relationships = [
         'trackers' => TrackerResource::class,
-        'transactions' => TransactionResource::class,
+        // 'transactions' => TransactionResource::class,
     ];
 
     public function toAttributes(Request $request)
