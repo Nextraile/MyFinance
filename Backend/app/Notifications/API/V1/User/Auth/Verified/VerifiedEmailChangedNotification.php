@@ -54,6 +54,7 @@ class VerifiedEmailChangedNotification extends Notification
             ->subject('Verify Your Email Address - ' . config('app.name'))
             ->greeting('Hello!')
             ->line('You are receiving this email because we received an email verification request for your account.')
+            ->line('Please click the button below from your logged-in device to verify your new email address.')
             ->action('Verify New Email', $url)
             ->line('This verification link will expire in ' . config('auth.verification.expire') . ' minutes.')
             ->line('If you did not request an email verification, no further action is required.')
