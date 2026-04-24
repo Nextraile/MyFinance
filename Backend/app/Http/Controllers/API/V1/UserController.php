@@ -56,10 +56,10 @@ class UserController extends Controller
     // Sign In
     public function login(LoginRequest $request)
     {
-        $user = $request['user'];
+        $user = $request->user;
 
         if ($this->authService->isVerified($user)) {
-            $currentDeviceHash = $request['currentDeviceHash'];
+            $currentDeviceHash = $request->currentDeviceHash;
             $devices = collect($user->known_devices);
 
             if ($devices->contains('hash', $currentDeviceHash)) {
@@ -96,7 +96,7 @@ class UserController extends Controller
     // Password Resets
     public function forgotPassword(ForgotPasswordRequest $request)
     {
-        $user = $request['user'];
+        $user = $request->user;
 
         $token = $this->authService->makePasswordResetToken($user);
 
@@ -117,7 +117,7 @@ class UserController extends Controller
     public function resetPassword(ResetPasswordRequest $request)
     {
         $credentials = $request->validated();
-        $user = $request['user'];
+        $user = $request->user;
 
         try {
 
@@ -167,8 +167,8 @@ class UserController extends Controller
     public function update(UpdateProfileRequest $request)
     {
         $credentials = $request->validated();
-        $credentials['password'] = $request['password'];
-        $user = $request['user'];
+        $credentials['password'] = $request->newPassword ?? null;
+        $user = $request->user();
         $message = null;
         $mustNotBeEmptyFields = ['name', 'email', 'password'];
 
@@ -259,7 +259,7 @@ class UserController extends Controller
     // Email Verification
     public function sendVerificationEmail(SendVerificationEmailRequest $request)
     {
-        $user = $request['user'];
+        $user = $request->user();
 
         $this->authService->sendVerificationEmailNotification($user);
 
@@ -270,7 +270,7 @@ class UserController extends Controller
 
     public function verifyEmail(VerifyEmailRequest $request)
     {
-        $user = $request['user'];
+        $user = $request->user;
         $currentDeviceHash = $this->authService->hashDevice($user->id, $request->userAgent());
 
         $this->authService->addDevice($user, $currentDeviceHash);
