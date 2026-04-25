@@ -7,6 +7,7 @@ use Exception;
 class NewDeviceLoginDetectedException extends Exception
 {
     protected $message = "New device login detected.";
+    public $customStatus = 'NEW_DEVICE_LOGIN_DETECTED';
     protected $code = 403;
 
     public function __construct(?string $message = null) {
