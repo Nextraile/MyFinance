@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, type JSX } from "react";
 import { motion, AnimatePresence, spring } from "motion/react";
 import { useRouteLoaderData } from "react-router-dom";
 import { faTrashAlt, faUser } from "@fortawesome/free-regular-svg-icons";
-import { ApiUrl, StorageUrl } from "@/lib/variable";
+import { ApiUrl } from "@/lib/variable";
 import axios, { isAxiosError } from "axios";
 import { DBcreatetracker, DBgetalltrackers } from "@/lib/db";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -295,7 +295,7 @@ export function Dashboard(): JSX.Element {
                             <AnimatePresence>
                                 {isAccountOpen && !isOut && <motion.div
                                     key="accountDetails"
-                                    className="fixed right-0 sm:right-[4%] top-0 mt-18 mr-6 flex flex-col gap-3.5 bg-neutral-50/80 dark:bg-neutral-800/60 border-[0.5px] shadow p-3.5 rounded-xl backdrop-blur-[2px] dark:backdrop-blur-[6px] backdrop-grayscale-50 z-20 md:right-auto md:translate-x-17 md:w-60"
+                                    className="fixed right-0 sm:right-[4%] top-0 mt-18 mr-6 flex flex-col gap-3.5 bg-neutral-50/80 dark:bg-neutral-800/60 border-[0.5px] shadow p-3.5 rounded-xl backdrop-blur-[2px] dark:backdrop-blur-[6px] backdrop-grayscale-50 z-20 md:right-auto md:translate-x-17 md:min-w-60"
                                     initial = {{
                                         x: 10,
                                         opacity: 0
