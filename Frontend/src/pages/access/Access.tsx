@@ -1,11 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { AlertCircleIcon, FormInput } from "lucide-react";
+import { AlertCircleIcon } from "lucide-react";
 import { useEffect, useState, type JSX } from "react";
-import { useForm, useWatch } from "react-hook-form";
-import { email, z } from "zod"
+import { useForm } from "react-hook-form";
+import { z } from "zod"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faEyeSlash } from "@fortawesome/free-regular-svg-icons"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -38,11 +37,12 @@ export function Access(): JSX.Element {
 
     const login = async (values: z.infer<typeof loginSchema>): Promise<void> => {
         console.log(values)
+        console.log(ApiUrl)
         setIsInternalServerError(false)
         setIsInvalidCredentials(false)
         setIsError(false)
         try {
-            const res = await axios.post(`${ApiUrl}/api/auth/login`, {
+            const res = await axios.post(`${ApiUrl}/auth/tokens`, {
                 email: values.email,
                 password: values.password
             })
@@ -56,7 +56,7 @@ export function Access(): JSX.Element {
         } catch(err) {
             if(isAxiosError(err)) {
                 console.log("error", err)
-                if(err.response?.status === 401) {
+                if(err.response?.status === 422) {
                     setIsInvalidCredentials(true)
                     setIsError(true)
                 } else {

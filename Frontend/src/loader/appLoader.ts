@@ -17,7 +17,7 @@ const appLoader = async () => {
     // =[Output 1: when both exist]=
     if(authToken && localDb) {
         try {
-            const res = await axios.get(`${ApiUrl}/api/user/profile`, {
+            await axios.get(`${ApiUrl}/api/user/profile`, {
                 headers: {
                     Authorization: `Bearer ${authToken}`
                 }
@@ -48,7 +48,7 @@ const appLoader = async () => {
 
     if(authToken) {
         try {
-            const res = await axios.get(`${ApiUrl}/api/user/profile`, {
+            const res = await axios.get(`${ApiUrl}/users/profile`, {
                 headers: {
                     Authorization: `Bearer ${authToken}`
                 }

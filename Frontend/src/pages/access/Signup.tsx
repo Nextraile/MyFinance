@@ -1,11 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { AlertCircleIcon, FormInput } from "lucide-react";
+import { AlertCircleIcon } from "lucide-react";
 import { useState, type JSX } from "react";
-import { useForm, useWatch } from "react-hook-form";
-import { email, z } from "zod"
+import { useForm } from "react-hook-form";
+import { z } from "zod"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faEyeSlash } from "@fortawesome/free-regular-svg-icons"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -15,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { spring } from "motion-dom";
 import axios, { isAxiosError } from "axios";
 import { OrbitProgress } from "react-loading-indicators";
+import { ApiUrl } from "@/lib/variable";
 
 
 export function Signup(): JSX.Element {
@@ -67,17 +67,22 @@ export function Signup(): JSX.Element {
 
         try {
             setIsLoading(true)
-            const res = await axios.post("http://127.0.0.1:8000/api/auth/register", {
+            const res = await axios.post(`${ApiUrl}/users`, {
                 name: values.username,
                 email: values.email,
                 password: values.password,
                 password_confirmation: values.password
             })
-
+            console.log("outbound data:", {
+                name: values.username,
+                email: values.email,
+                password: values.password,
+                password_confirmation: values.password
+            })
             const data = await res.data
-            console.log(data.data.token)
-            if(data.data.token) {
-                localStorage.setItem("Authorization", data.data.token)
+            console.log("token :", data.data.meta.token)
+            if(data.data.meta.token) {
+                localStorage.setItem("Authorization", data.data.meta.token)
                 setIsOut(true)
                 setTimeout(() => {
                     window.location.href = "/app"
@@ -94,13 +99,13 @@ export function Signup(): JSX.Element {
                 if(status === 422) {
                     const errors = err.response?.data.errors
                     console.log(err.response?.data.errors)
-                    if (errors.password) {
+                    if (errors?.password) {
                         setIsPasswordError(true)
                     }
-                    if(errors.name) {
+                    if(errors?.name) {
                         setIsNameError(true)
                     }
-                    if(errors.email) {
+                    if(errors?.email) {
                         setIsEmailError(true)
                     }
                 } else {
@@ -207,7 +212,7 @@ export function Signup(): JSX.Element {
                             >
                                 <Alert variant="destructive" className="w-full bg-background-primary dark:bg-background-primary-dark">
                                     <AlertCircleIcon />
-                                    <AlertTitle className="font-semibold tracking-normal">Sign In Failed</AlertTitle>
+                                    <AlertTitle className="font-semibold tracking-normal">Sign Up Failed</AlertTitle>
                                     <AlertDescription>
                                         <ul className="list-inside list-disc text-sm">
                                         {isNameError && 

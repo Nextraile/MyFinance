@@ -1,25 +1,22 @@
 import { Input } from "@/components/ui/input";
-import { userData } from "@/lib/userData";
-import { faArrowRightFromBracket, faCloud, faEllipsisV, faHamburger, faLock, faMagnifyingGlass, faMoneyBill, faMoneyBillWave, faQuestion, faSun, faTrash, faUserPen } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRightFromBracket, faCloud, faEllipsisV, faLock, faMagnifyingGlass, faMoneyBillWave, faQuestion, faUserPen } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { PlusIcon, XIcon } from "lucide-react";
 import { useEffect, useRef, useState, type JSX } from "react";
-import { motion, AnimatePresence, spring, easeOut } from "motion/react";
-import { useLoaderData, useRouteLoaderData } from "react-router-dom";
+import { motion, AnimatePresence, spring } from "motion/react";
+import { useRouteLoaderData } from "react-router-dom";
 import { faTrashAlt, faUser } from "@fortawesome/free-regular-svg-icons";
 import { ApiUrl, StorageUrl } from "@/lib/variable";
 import axios, { isAxiosError } from "axios";
 import { DBcreatetracker, DBgetalltrackers } from "@/lib/db";
-import { ContextMenu, ContextMenuContent, ContextMenuItem } from "@/components/ui/context-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ModeToggle } from "@/components/mode-toggle";
 
 export function Dashboard(): JSX.Element {
     const mainLoaderData = useRouteLoaderData("main")
-    const loaderData = useLoaderData<[any]>()
     
     const [ trackers, setTrackers ] = useState<{id: number, user_id: number, description: string, initial_balance: number, name: string, transactions: {amount: number, type: "income" | "expense"}[]}[] | []>([])
-    const [ user, setUser ] = useState<any[]>([])
+    const [ _user, setUser ] = useState<any[]>([])
     const [ isAccountOpen, setIsAccountOpen ] = useState<boolean>(false)
     const [ isCreateBoxOpen, setIsCreateBoxOpen ] = useState<boolean>(false)
     const [ isOut, setIsOut ] = useState<boolean>(false)
@@ -34,7 +31,7 @@ export function Dashboard(): JSX.Element {
         const authToken = localStorage.getItem("Authorization")
 
         try {
-            const res = await axios.get(`${ApiUrl}/api/trackers`, {
+            const res = await axios.get(`${ApiUrl}/trackers`, {
                 headers: {
                     Authorization: `Bearer ${authToken}`
                 }
@@ -62,6 +59,7 @@ export function Dashboard(): JSX.Element {
     }
     
     useEffect(() => {
+        console.log("mainLoaderData", mainLoaderData)
         setUser(mainLoaderData)
 
         const session = localStorage.getItem("session")
@@ -99,7 +97,7 @@ export function Dashboard(): JSX.Element {
     
             if(session === "local") {
                 try {
-                    const res = await DBcreatetracker(name, desc, cleanedBalance)
+                    await DBcreatetracker(name, desc, cleanedBalance)
                     setIsCreateBoxOpen(false)
                     console.log("created!")
                     // get the tracker and render!
@@ -144,7 +142,7 @@ export function Dashboard(): JSX.Element {
 
     const signout = async () => {
         try {
-            const res = await axios.post(`${ApiUrl}/api/auth/logout`, {}, {
+            await axios.post(`${ApiUrl}/api/auth/logout`, {}, {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("Authorization")}`
                 }
@@ -179,6 +177,13 @@ export function Dashboard(): JSX.Element {
                 reloadTracker()
             } catch(err) {
                 reloadTracker()
+            }
+        }
+        if(session === "local") {
+            try {
+                // await DBdeletetransaction(id)
+            } catch(err) {
+                console.log(err)
             }
         }
     }
@@ -255,7 +260,7 @@ export function Dashboard(): JSX.Element {
                                     <motion.div
                                         key="accountDetailsClosed"
                                         onClick={() => setIsAccountOpen(true)}
-                                        style={{backgroundImage: session === "cloud" ? `url(${StorageUrl}${mainLoaderData?.avatar}` : "none", backgroundPosition: "center", backgroundRepeat: "no-repeat", backgroundSize: "cover"}}
+                                        style={{backgroundImage: session === "cloud" ? `url(${mainLoaderData?.avatar}` : "none", backgroundPosition: "center", backgroundRepeat: "no-repeat", backgroundSize: "cover"}}
                                         className={`w-10 h-10 rounded-full shadow ring ring-input ${mainLoaderData?.avatar === null || mainLoaderData?.avatar === undefined  ? "flex justify-center items-center bg-white/60 backdrop-blur-[2px] dark:backdrop-blur-xs dark:bg-white/3" : ""}`}
                                         initial={{
                                             opacity: 0
@@ -319,12 +324,12 @@ export function Dashboard(): JSX.Element {
                                     <div className="flex items-center justify-between gap-3">
                                         <div className="flex items-center gap-2.5">
                                             <motion.div
-                                                style={{backgroundImage: session === "cloud" ? `url(${StorageUrl}${mainLoaderData?.avatar}` : "none", backgroundPosition: "center", backgroundRepeat: "no-repeat", backgroundSize: "cover"}} className={`w-10 h-10 rounded-full dark:bg-transparent ${mainLoaderData.avatar === null || mainLoaderData.avatar === undefined ? "flex justify-center items-center border" : ""}`}>
+                                                style={{backgroundImage: session === "cloud" ? `url(${mainLoaderData?.avatar}` : "none", backgroundPosition: "center", backgroundRepeat: "no-repeat", backgroundSize: "cover"}} className={`w-10 h-10 rounded-full dark:bg-transparent ${mainLoaderData.avatar === null || mainLoaderData.avatar === undefined ? "flex justify-center items-center border" : ""}`}>
                                                 {!mainLoaderData?.avatar && <FontAwesomeIcon icon={faUser} className="text-base text-neutral-700 dark:text-neutral-400" />}
                                             </motion.div>
                                             <div>
-                                                <h3 className="font-medium text-[15px]">{mainLoaderData?.name}</h3>
-                                                <p className="font-medium text-xs text-black/80 dark:text-white/80">{mainLoaderData?.email}</p>
+                                                <h3 className="font-medium text-[15px]">{session === "cloud" ? mainLoaderData?.attributes.name : mainLoaderData?.name}</h3>
+                                                <p className="font-medium text-xs text-black/80 dark:text-white/80">{session === "cloud" ? mainLoaderData?.attributes.email : mainLoaderData?.email}</p>
                                             </div>
                                             
                                         </div>

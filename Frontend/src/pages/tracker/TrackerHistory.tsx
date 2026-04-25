@@ -1,24 +1,23 @@
 import { useEffect, useState, type JSX } from "react";
-import { AnimatePresence, motion, spring } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft, faArrowRightFromBracket, faFilter, faLock, faQuestion, faSun, faUserPen } from "@fortawesome/free-solid-svg-icons";
-import { userData } from "@/lib/userData";
-import { XIcon } from "lucide-react";
-import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { faEllipsisV, faFilter, faQuestion } from "@fortawesome/free-solid-svg-icons";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { TrackerNavbar } from "@/components/TrackerNavbar";
 import { DBgetalltransactions } from "@/lib/db";
-import { useParams, useRouteLoaderData } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import axios from "axios";
 import { ApiUrl } from "@/lib/variable";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { faTrashAlt } from "@fortawesome/free-regular-svg-icons";
 
 export function TrackerHistory(): JSX.Element {
     const { id } = useParams()
 
     const [ isOut, setIsOut ] = useState<boolean>(false)
-    const [ isAccountOpen, setIsAccountOpen ] = useState<boolean>(false)
+    // const [ isAccountOpen, setIsAccountOpen ] = useState<boolean>(false)
     const [ showPlus, setShowPlus ] = useState(true)
     const [ showwMinus, setShowMinus ] = useState(true)
     const [ session, setSession ] = useState<"cloud" | "local" | null>(null)
@@ -123,6 +122,20 @@ export function TrackerHistory(): JSX.Element {
         getData()
     }, [page, direction, showPlus, showwMinus])
 
+    // const deleteTransaction = async (transactionId: number) => {
+    //     console.log(id)
+    //     try {
+    //         const res = await axios.delete(`${ApiUrl}/api/trackers/${id}/transactions`, {
+    //             headers: {
+    //                 Authorization: `Bearer ${localStorage.getItem("Authorization")}`
+    //             }
+    //         })
+    //         getData()
+    //     } catch(err) {
+    //         console.log(err)
+    //     }
+    // }
+
     return (
         <section className="flex flex-col items-center w-full md:max-w-[650px]">
             <TrackerNavbar trackerName="My New Navbar" setIsOut={setIsOut} isOut={isOut} backLink={`/app/tracker/${id}`}  />
@@ -152,28 +165,28 @@ export function TrackerHistory(): JSX.Element {
                     }}
                 >
                     <div className="flex justify-between w-full fixed left-[50%] -translate-x-[50%] px-10 md:w-160 bg-background-primary pt-3 -mt-3 pb-2 dark:bg-background-primary-dark">
-                        <h3 className="text-sm font-regular">Riwayat finansial</h3>
+                        <h3 className="text-sm font-regular">Transactions History</h3>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <FontAwesomeIcon icon={faFilter} />
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="bg-white/50 backdrop-blur-xs w-45 mr-5 dark:bg-background-primary-dark/40 dark:backdrop-blur-xs">
                                 <DropdownMenuRadioGroup value={direction} onValueChange={setDirection}>
-                                    <DropdownMenuRadioItem value="asc">Naik</DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="desc" defaultChecked>Turun</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="asc">Ascending</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="desc" defaultChecked>Descending</DropdownMenuRadioItem>
                                 </DropdownMenuRadioGroup>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuCheckboxItem
                                 checked={showwMinus}
                                 onCheckedChange={setShowMinus}
                                 >
-                                Pengeluaran
+                                Income
                                 </DropdownMenuCheckboxItem>
                                 <DropdownMenuCheckboxItem
                                 checked={showPlus}
                                 onCheckedChange={setShowPlus}
                                 >
-                                Pemasukkan
+                                Expense
                                 </DropdownMenuCheckboxItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -194,7 +207,11 @@ export function TrackerHistory(): JSX.Element {
                                                 <p className="font-semibold text-base">{item.type === "income" ? "+ " : "- "} Rp.{item.income.toLocaleString("iD")}</p>
                                             </div>
                                         </div>
-                                        <div className="self-end flex-1 font-normal text-xs text-neutral-500">{item.date.getDay()}-{item.date.getMonth()}-{item.date.getFullYear()}</div>
+                                        <div className="self-end flex-1 font-normal text-xs text-neutral-500">{item.date.toLocaleDateString("ID", {
+                                            day: "numeric",
+                                            month: "numeric",
+                                            year: "numeric"
+                                        })}</div>
                                     </div>
                                 </DialogTrigger>
                                 <DialogContent className="w-full flex flex-col items-center bg-background-primary/90 dark:bg-background-primary-dark/50 backdrop-blur-xl">
@@ -226,7 +243,24 @@ export function TrackerHistory(): JSX.Element {
                                                 <p className="font-semibold text-base">{item.type === "income" ? "+ " : "- "} Rp.{parseInt(item.amount, 10).toLocaleString("ID")}</p>
                                             </div>
                                         </div>
-                                        <div className="self-end flex-1 font-normal text-xs text-neutral-500">{(new Date(item.transaction_date)).getDate()}-{(new Date(item.transaction_date)).getMonth()}-{(new Date(item.transaction_date)).getFullYear()}</div>
+                                        <div className="self-end flex-1 font-normal text-xs text-neutral-500">{new Date(item.transaction_date).toLocaleDateString("ID", {
+                                            day: "numeric",
+                                            month: "numeric",
+                                            year: "numeric"
+                                        })}</div>
+                                        <Popover>
+                                            <PopoverTrigger className="w-3 -translate-x-2 self-start" onClick={(e) => e.stopPropagation()}>
+                                                <FontAwesomeIcon icon={faEllipsisV} className="text-black/60 dark:text-white/60" />
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-fit px-0 py-2 dark:bg-neutral-800/60 backdrop-blur-xs">
+                                                <motion.div 
+                                                    className="flex items-center gap-1 px-3"
+                                                >
+                                                    <FontAwesomeIcon icon={faTrashAlt} />
+                                                    <p className="font-medium text-base" onClick={(e) => {e.stopPropagation()}}>Delete</p>
+                                                </motion.div>
+                                            </PopoverContent>
+                                        </Popover>
                                     </div>
                                 </DialogTrigger>
                                 <DialogContent className="w-full flex flex-col items-center bg-background-primary/90 dark:bg-background-primary-dark/50 backdrop-blur-xl">

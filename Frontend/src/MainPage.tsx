@@ -1,7 +1,5 @@
 import type { JSX } from "react";
 import { Outlet } from "react-router-dom";
-import { ThemeProvider } from "./components/theme-provider";
-import { ModeToggle } from "./components/mode-toggle";
 
 export function MainPage(): JSX.Element {
     return (

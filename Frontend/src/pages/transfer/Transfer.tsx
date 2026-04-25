@@ -8,8 +8,6 @@ import { Button } from "@/components/ui/button";
 import { TransferTrackerItem } from "@/components/TransferTrackerItem";
 import { OrbitProgress } from "react-loading-indicators"; 
 import { DBdelete } from "@/lib/db";
-import { fa } from "zod/v4/locales";
-
 
 export function Transfer(): JSX.Element {
     const [ isTransfer, setIsTransfer ] = useState<boolean>(false)
@@ -51,7 +49,7 @@ export function Transfer(): JSX.Element {
         }, 3000)
         
         try {
-            const res = await DBdelete()
+            await DBdelete()
             setIsFailed(true)
         } catch (err) {
             setIsFailed(false)
@@ -161,7 +159,7 @@ export function Transfer(): JSX.Element {
                     <AnimatePresence mode="wait">
                         {!isTransfer && <motion.h1 
                             key="pre-transfer"
-                            className={`self-stretch text-center justify-start text-stone-900 text-2xl font-semibold`}
+                            className={`self-stretch text-center justify-start text-stone-900 text-2xl font-semibold dark:text-neutral-50`}
                             initial={{
                                 x: -30,
                                 opacity: 0
@@ -179,7 +177,7 @@ export function Transfer(): JSX.Element {
                         </motion.h1>}
                         {isTransfer && <motion.h1 
                             key="in-transfer"
-                            className={`self-stretch text-center justify-start text-stone-900 text-2xl font-semibold`}
+                            className={`self-stretch text-center justify-start text-stone-900 text-2xl font-semibold dark:text-neutral-50`}
                             initial={{
                                 x: 30,
                                 opacity: 0
@@ -200,7 +198,7 @@ export function Transfer(): JSX.Element {
                         {!isTransfer &&
                             <motion.p
                             key="pre-transfer"
-                            className="text-stone-900 text-base font-normal"
+                            className="text-stone-900 text-base font-normal dark:text-background-primary"
                             initial={{
                                 x: -30,
                                 opacity: 0
@@ -215,7 +213,7 @@ export function Transfer(): JSX.Element {
                             }}
                             >
                                 To keep your data synced, transfer your local data to
-                                <b className="text-stone-900 text-base font-medium"> MyCloud </b>
+                                <b className="text-stone-900 text-base font-medium dark:text-background-primary"> MyCloud </b>
                                 now
                             </motion.p>
                         }
@@ -283,7 +281,7 @@ export function Transfer(): JSX.Element {
                                             Start Clean
                                         </motion.button>
                                     </AlertDialogTrigger>
-                                    <AlertDialogContent>
+                                    <AlertDialogContent className="bg-background-primary dark:bg-background-primary-dark/50 backdrop-blur-2xl">
                                         <AlertDialogHeader>
                                             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                             <AlertDialogDescription>This action will give you a fresh <span className="font-semibold">MyCloud</span> account and will <span className="font-semibold">permanently delete</span> your local data.</AlertDialogDescription>
@@ -504,9 +502,9 @@ export function Transfer(): JSX.Element {
             <FontAwesomeIcon icon={faThumbsUp} className="text-7xl" />
             <div className="flex flex-col gap-6">
                 <div className="flex items-center flex-col gap-2.5">
-                    <h1 className={`self-stretch text-center justify-start text-stone-900 text-2xl font-semibold`}>Data Cleaned!</h1>
-                    <p className="text-stone-900 text-base font-normal text-center w-[95%]">
-                        Your data is now synced to <span className="text-stone-900 text-base font-medium">MyCloud.</span> <br />
+                    <h1 className={`self-stretch text-center justify-start text-stone-900 text-2xl font-semibold dark:text-neutral-50`}>Data Cleaned!</h1>
+                    <p className="text-stone-900 text-base font-normal text-center w-[95%] dark:text-background-primary">
+                        Your data is now synced to <span className="text-stone-900 text-base font-medium dark:text-neutral-50">MyCloud.</span> <br />
                         Enjoy cross device access and worry-free about losing your data.
                     </p>
                 </div>
@@ -517,7 +515,7 @@ export function Transfer(): JSX.Element {
 
     return (
         <motion.section 
-            className="flex justify-center items-center min-h-screen -mt-5"
+            className="flex justify-center items-center min-h-screen -mt-5 bg-background-primary dark:bg-background-primary-dark"
             layout
         >
             <AnimatePresence mode="popLayout">

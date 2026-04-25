@@ -1,11 +1,7 @@
 import { useEffect, useRef, useState, type JSX } from "react";
-import { AnimatePresence, motion, spring } from "motion/react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft, faArrowRightFromBracket, faLock, faMagnifyingGlass, faQuestion, faSun, faUserPen, faWarning } from "@fortawesome/free-solid-svg-icons";
+import { AnimatePresence, motion } from "motion/react";
 import { Input } from "@/components/ui/input";
-import { userData } from "@/lib/userData";
-import { Files, XIcon } from "lucide-react";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { CartesianGrid, LabelList, Line, LineChart, XAxis, YAxis } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -45,7 +41,7 @@ export function Tracker(): JSX.Element {
     const pengeluaranDate = useRef<HTMLInputElement | null>(null)
     const [ pengeluaranNominal, setPengeluaranNominal ] = useState<string>("")
 
-    const [ theme, setTheme ] = useState<"light" | "dark" | "system">("system")
+    const [ _theme, setTheme ] = useState<"light" | "dark" | "system">("system")
 
     // to get all transactions and set it inside useState
     const localInitialize = async () => {
@@ -112,7 +108,7 @@ export function Tracker(): JSX.Element {
         if(cleanedBalance && judul !== "" && judul !== undefined && date !== null && desc !== undefined && id) {
             if(session === "local") {
                 try {
-                    const res = await DBaddincome(judul, desc !== "" ? desc : null, image ? image : null, date, parseInt(id, 10), cleanedBalance)
+                    await DBaddincome(judul, desc !== "" ? desc : null, image ? image : null, date, parseInt(id, 10), cleanedBalance)
                     localInitialize()
                 } catch(err) {
                     console.log(err)
@@ -156,7 +152,7 @@ export function Tracker(): JSX.Element {
         if(cleanedBalance && judul !== "" && judul !== undefined && date !== null && desc !== undefined && id) {
             if(session === "local") {
                 try {
-                    const res = await DBaddoutcome(judul, desc !== "" ? desc : null, image ? image : null, date, parseInt(id, 10), cleanedBalance)
+                    await DBaddoutcome(judul, desc !== "" ? desc : null, image ? image : null, date, parseInt(id, 10), cleanedBalance)
                     localInitialize()
                 } catch(err) {
                     console.log(err)
@@ -198,7 +194,7 @@ export function Tracker(): JSX.Element {
                 // solve the date object to string
                 const year = item.date.getFullYear()
                 const month = item.date.getMonth()
-                const day = item.date.getDate()
+                const day = item.date.getUTCDate()
                 const formattedDate = `${day}-${month}-${year}` 
 
                 // solve the outcome income format
@@ -219,7 +215,9 @@ export function Tracker(): JSX.Element {
             slicedData.forEach((item) => {
                 // solve the date object to string
                 const year = item.transaction_date.getFullYear()
-                const month = item.transaction_date.getMonth()
+                const month = item.transaction_date.toLocaleString("ID", {
+                    month: "numeric",
+                })
                 const day = item.transaction_date.getDate()
                 const formattedDate = `${day}-${month}-${year}`
                 console.log(`${day}-${month}-${year}`, item.transaction_date)
@@ -249,7 +247,6 @@ export function Tracker(): JSX.Element {
             sortData.forEach((item) => {
                 // solve the outcome income format
                 const type = item.type
-                const amount = item.income
                 
                 if(type === "income") {
                     income += item.income
@@ -471,21 +468,20 @@ export function Tracker(): JSX.Element {
                 >
                     <div className="w-full flex flex-col gap-3">
                         <div className="w-full">
-                            <p className="font-normal text-sm text-neutral-700 dark:text-neutral-300">Saldo kamu:</p>
+                            <p className="font-normal text-sm text-neutral-700 dark:text-neutral-300">Your balance:</p>
                             <p className="font-semibold text-xl">Rp.{balance.toLocaleString("ID")}</p>
                         </div>
                         <div className="w-full">
                             <ChartContainer config={chartConfig}>
-                                <AreaChart
+                                <LineChart
                                     accessibilityLayer
                                     data={chart}
                                     margin={{
-                                    left: 10,
-                                    right: 10,
-                                    top: 10 ,
+                                    left: 25,
+                                    right: 25,
+                                    top: 25,
                                     bottom: 10
                                     }}
-                
                                 >
                                     <CartesianGrid vertical={false} />
                                     <XAxis
@@ -509,28 +505,37 @@ export function Tracker(): JSX.Element {
                                         cursor={false}
                                         content={<ChartTooltipContent indicator="line" />}
                                     />
-                                    <Area
+                                    <Line
                                         dataKey="balance"
-                                        type='natural'
+                                        type='linear'
                                         fill={localStorage.getItem("vite-ui-theme") === "light" ? "#16E716" : "#6703DC"}
                                         fillOpacity={0.2}
+                                        className=""
                                         stroke={localStorage.getItem("vite-ui-theme") === "light" ? "#16E716" : "#6703DC"}
-                                    />
-                                </AreaChart>
+                                    >
+                                        <LabelList
+                                            position="top"
+                                            offset={12}
+                                            className= {`${localStorage.getItem("vite-ui-theme") === "light" ? "fill-black/70" : "fill-white/70"}`}
+                                            fontSize={12}
+                                            formatter={(balance: number) => balance.toLocaleString("ID")}
+                                        />
+                                    </Line>
+                                </LineChart>
                             </ChartContainer>
                         </div>
                         <div className="flex justify-between w-full gap-5">
                             <Dialog>
                                 <DialogTrigger className="flex-1 w-full" onClick={() => getTimestampNow()}>
-                                    <motion.div whileTap={{ scale: 0.95 }}><Button className="flex-1 w-full bg-green-300 dark:bg-violet-600 border-2 border-green-300 dark:border-violet-600 text-neutral-800 font-semibold hover:bg-green-400 dark:hover:bg-violet-500 dark:text-white" onClick={() => setPendapatanUrl(null)} >+ Pendapatan</Button></motion.div>
+                                    <motion.div whileTap={{ scale: 0.95 }}><Button className="flex-1 w-full bg-green-400/75 dark:bg-violet-600 dark:border-violet-600 text-neutral-800 font-semibold hover:bg-green-400 dark:hover:bg-violet-500 dark:text-white" onClick={() => setPendapatanUrl(null)} >+ Income</Button></motion.div>
                                 </DialogTrigger>
                                 <DialogContent className="flex flex-col shadow-green-300/40 dark:shadow-green-300/7 bg-white/80 dark:bg-background-primary-dark/60 backdrop-blur-2xl">
-                                    <DialogTitle className="font-medium">Pendapatan</DialogTitle>
+                                    <DialogTitle className="font-medium">Income</DialogTitle>
                                     <DialogDescription className="flex flex-col gap-4">
                                         <div className="flex flex-col gap-2">
-                                            <Input className="ring bg-white/30 dark:ring ring-black/20 dark:ring-white/20" ref={pendapatanJudul} placeholder="Judul" />
-                                            <Input className="ring bg-white/30 dark:ring ring-black/20 dark:ring-white/20" value={pendapatanNominal} onChange={(e) => balanceFilter(e.target.value)} placeholder="Nominal" />
-                                            <Input className="ring bg-white/30 dark:ring ring-black/20 dark:ring-white/20" ref={pendapatanDesc} placeholder="Deskripsi (opsional)" />
+                                            <Input className="ring bg-white/30 dark:ring ring-black/20 dark:ring-white/20" ref={pendapatanJudul} placeholder="Title" />
+                                            <Input className="ring bg-white/30 dark:ring ring-black/20 dark:ring-white/20" value={pendapatanNominal} onChange={(e) => balanceFilter(e.target.value)} placeholder="Amount" />
+                                            <Input className="ring bg-white/30 dark:ring ring-black/20 dark:ring-white/20" ref={pendapatanDesc} placeholder="Description (optional)" />
                                             <div className="flex flex-row gap-2 mt-2">
                                                 <Input className="ring bg-white/30 dark:ring ring-black/20 dark:ring-white/20" ref={pendapatanImage} type="file" onChange={(e) => {
                                                     const file = e.target.files
@@ -549,23 +554,23 @@ export function Tracker(): JSX.Element {
                                             </div>
                                             <img src={pendapatanUrl ? pendapatanUrl : undefined} alt="" className="w-[50%] max-h-40 rounded-md" />
                                         </div>
-                                        <DialogClose onClick={() => addIncome()} className="bg-green-300 dark:bg-violet-600 dark:text-white border-2 dark:border-violet-700 border-green-400 text-black font-[Inter] font-semibold py-1.5 rounded-md">Tambah</DialogClose>
+                                        <DialogClose onClick={() => addIncome()} className="bg-green-400/75 dark:bg-violet-600 dark:text-white border-2 dark:border-violet-700 border-green-400 text-black font-[Inter] font-semibold py-1.5 rounded-md">Add Income</DialogClose>
                                     </DialogDescription>
                                 </DialogContent>
                             </Dialog>
                             <Dialog>
                                 <DialogTrigger className="flex-1 w-full" onClick={() => getTimestampNow()}>
-                                    <motion.div whileTap={{ scale: 0.95 }}><Button className="flex-1 w-full bg-red-300 font-semibold border-2 border-red-300 text-neutral-800 dark:bg-red-600 dark:border-red-600 hover:bg-red-400 dark:text-white">- Pengeluaran</Button></motion.div>
+                                    <motion.div whileTap={{ scale: 0.95 }}><Button className="flex-1 w-full bg-red-400/80 font-semibold text-neutral-800 dark:bg-red-600 dark:border-red-600 hover:bg-red-400 dark:text-white">- Expense</Button></motion.div>
                                 </DialogTrigger>
                                 <DialogContent className="flex flex-col shadow-red-400/20 dark:shadow-red-400/7 bg-white/80 dark:bg-background-primary-dark/60 backdrop-blur-2xl">
-                                    <DialogTitle className="font-medium">Pengeluaran</DialogTitle>
+                                    <DialogTitle className="font-medium">Expense</DialogTitle>
                                     <DialogDescription className="flex flex-col gap-4">
                                         <div className="flex flex-col gap-2">
-                                            <Input className="ring bg-white/30 dark:ring ring-black/20 dark:ring-white/20" ref={pengeluaranJudul} placeholder="Judul" />
-                                            <Input className="ring bg-white/30 dark:ring ring-black/20 dark:ring-white/20" value={pengeluaranNominal} onChange={(e) => balanceFilter(e.target.value)} placeholder="Nominal" />
-                                            <Input className="ring bg-white/30 dark:ring ring-black/20 dark:ring-white/20" ref={pengeluaranDesc} placeholder="Deskripsi (opsional)" />
-                                            <div ref={pengeluaranImage} className="flex flex-row gap-2 mt-2">
-                                                <Input className="ring bg-white/30 dark:ring ring-black/20 dark:ring-white/20" type="file" onChange={(e) => {
+                                            <Input className="ring bg-white/30 dark:ring ring-black/20 dark:ring-white/20" ref={pengeluaranJudul} placeholder="Title" />
+                                            <Input className="ring bg-white/30 dark:ring ring-black/20 dark:ring-white/20" value={pengeluaranNominal} onChange={(e) => balanceFilter(e.target.value)} placeholder="Amount" />
+                                            <Input className="ring bg-white/30 dark:ring ring-black/20 dark:ring-white/20" ref={pengeluaranDesc} placeholder="Description (optional)" />
+                                            <div className="flex flex-row gap-2 mt-2">
+                                                <Input className="ring bg-white/30 dark:ring ring-black/20 dark:ring-white/20" ref={pengeluaranImage} type="file" onChange={(e) => {
                                                     const file = e.target.files
                                                     console.log(e.target.files)
                                                     if(file?.length === 0) {
@@ -582,7 +587,7 @@ export function Tracker(): JSX.Element {
                                             </div>
                                             <img src={pengeluaranUrl ? pengeluaranUrl : undefined} alt="" className="w-[50%] max-h-40 rounded-md" />
                                         </div>
-                                        <DialogClose className="bg-red-300 dark:bg-red-600 dark:text-white border-2 border-red-700 text-black font-[Inter] font-semibold py-1.5 rounded-md" onClick={() => addOutcome()}>Tambah</DialogClose>
+                                        <DialogClose className="bg-red-400/75 dark:bg-red-600 dark:text-white border-2 border-red-500 text-black font-[Inter] font-semibold py-1.5 rounded-md" onClick={() => addOutcome()}>Add Expense</DialogClose>
                                     </DialogDescription>
                                 </DialogContent>
                             </Dialog>
@@ -592,8 +597,8 @@ export function Tracker(): JSX.Element {
                         <div className="w-full flex flex-col gap-7">
                             <div className="flex flex-col w-full">
                                 <div className="flex justify-between items-center w-full">
-                                    <p className="font-medium text-base">Riwayat Transaksi</p>
-                                    <Button onClick={() => { setIsOut(true); setTimeout(() => { window.location.href = `/app/tracker/history/${trackerData?.id}`; }, 400); }} className="bg-background-primary-dark font-medium h-8 dark:bg-background-primary dark:text-neutral-800 dark:border text-white/95">Lihat lengkap</Button>
+                                    <p className="font-medium text-base">Transactions History</p>
+                                    <Button onClick={() => { setIsOut(true); setTimeout(() => { window.location.href = `/app/tracker/history/${trackerData?.id}`; }, 400); }} className="bg-background-primary-dark font-medium h-8 dark:bg-background-primary dark:text-neutral-800 dark:border text-white/95">More</Button>
                                 </div>
                                 {historyBalance.length === 0 && <div className="flex flex-col justify-center items-center text-center h-35">
                                     <p className="text-center font-medium text-base text-black/50 dark:text-white/50">You have very few transactions <br /> <span className="font-normal">Try adding it and see your history here.</span></p>                                
@@ -612,21 +617,21 @@ export function Tracker(): JSX.Element {
                             </div>
                             <div className="flex flex-col w-full gap-4 h-full">
                                 <div className="flex justify-between items-center w-full">
-                                    <p className="font-medium text-base">Laporan & Insight</p>
-                                    <Button onClick={() => {setIsOut(true); setTimeout(() => window.location.href = `/app/tracker/report/${trackerData?.id}`, 400)}} className="bg-background-primary-dark font-medium h-8 dark:bg-background-primar dark:text-black text-white/95 dark:bg-background-primary">Lihat lengkap</Button>
+                                    <p className="font-medium text-base">Report & Insight</p>
+                                    <Button onClick={() => {setIsOut(true); setTimeout(() => window.location.href = `/app/tracker/report/${trackerData?.id}`, 400)}} className="bg-background-primary-dark font-medium h-8 dark:bg-background-primar dark:text-black text-white/95 dark:bg-background-primary">More</Button>
                                 </div>
                                 <div className="flex flex-row gap-2 h-full w-full">
                                     <div className="flex flex-row gap-2 overflow-hidden w-full">
                                         <div className="bg-white w-fit px-4 py-3 border rounded-lg flex-1 dark:bg-black/5">
-                                            <p className="font-normal text-sm">Pemasukkan</p>
+                                            <p className="font-normal text-sm">Income</p>
                                             <p className="font-medium text-lg">Rp.{report.income.toLocaleString("ID")}</p>
                                         </div>
                                         <div className="bg-white w-fit px-4 py-3 border rounded-lg flex-1 dark:bg-black/5">
-                                            <p className="font-normal text-sm">Pengeluaran</p>
+                                            <p className="font-normal text-sm">Expense</p>
                                             <p className="font-medium text-lg">Rp.{report.outcome.toLocaleString("ID")}</p>
                                         </div>
                                         <div className="bg-white w-fit px-4 py-3 border rounded-lg flex-1 dark:bg-black/5 hidden">
-                                            <p className="font-normal text-sm text-nowrap">Saldo akhir</p>
+                                            <p className="font-normal text-sm text-nowrap">Last Balance</p>
                                             <p className="font-medium text-lg text-nowrap">Rp.{report.balance.toLocaleString("ID")}</p>
                                         </div>
                                         <div className="absolute w-20 h-25 left-[calc(100vw-100px)] bg-linear-to-l from-background-primary dark:from-background-primary-dark to-transparent" />
