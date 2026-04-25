@@ -226,14 +226,6 @@ class UserController extends Controller
                 
                 
                 if (isset($credentials['password']) || (isset($credentials['email']) && $credentials['email'] !== $oldEmail)) {
-                    if (isset($credentials['password'])) {
-                        $column = 'password';
-                    } else if (isset($credentials['email'])) {
-                        $column = 'email';
-                    } else {
-                        $column = 'email and password';
-                    }
-
                     $column = match (true) {
                         isset($credentials['password']) && isset($credentials['email']) => 'email and password',
                         isset($credentials['password']) => 'password',
