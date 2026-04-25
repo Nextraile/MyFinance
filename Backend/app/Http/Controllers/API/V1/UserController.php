@@ -224,7 +224,7 @@ class UserController extends Controller
                 $user->update($data);
                 
                 
-                if (isset($credentials['password']) || isset($credentials['email'])) {
+                if (isset($credentials['password']) || (isset($credentials['email']) && $credentials['email'] !== $user->email)) {
                     if (isset($credentials['password'])) {
                         $column = 'password';
                     } else if (isset($credentials['email'])) {
