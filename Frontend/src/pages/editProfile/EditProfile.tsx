@@ -8,8 +8,10 @@ import { faCamera } from "@fortawesome/free-regular-svg-icons";
 import { useRouteLoaderData } from "react-router-dom";
 import { DBchangename } from "@/lib/db";
 import axios from "axios";
-import { ApiUrl } from "@/lib/variable";
+import { ApiUrl, StorageUrl } from "@/lib/variable";
 import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
+import { Spinner } from "@/components/ui/spinner";
+import { cn } from "@/lib/utils";
 
 export function EditProfile(): JSX.Element {
     const userData = useRouteLoaderData("main")
@@ -22,11 +24,16 @@ export function EditProfile(): JSX.Element {
     const [ session, setSession ] = useState<"cloud" | "local" | null>(null)
     const [ failed, setFailed ] = useState<boolean>(false)
     const [ profileState, setProfileState ] = useState<boolean>(false)
-    const [ imageExist, isImageExist ] = useState<boolean>(false)
-    const [ imageName, setImageName ] = useState<string>("")
+    const [ imageExist, setImageExist ] = useState<boolean>(false)
+    const [ imageName, setImageName ] = useState<string>("No file chosen")
+    const [selectedFile, setSelectedFile] = useState<File | null>(null)
+    const [ loadingChangeImage, setLoadingChangeImage ] = useState<boolean>(false)
+    const [ changeImageStatus, setChangeImageStatus ] = useState<"success" | "reject" | "null">("null")
+    const [ deleteConfirmation, setDeleteConfirmation ] = useState<boolean>(false)
 
     const username = useRef<HTMLInputElement | null>(null)
     const email = useRef<HTMLInputElement | null>(null)
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         console.log("userData :", userData)
@@ -47,6 +54,29 @@ export function EditProfile(): JSX.Element {
         setIsCredentialDifferent(true)
     }, [usernameUsestate, emailUsestate])
 
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            setSelectedFile(file);
+            setImageName(file.name);
+            setImageExist(true);
+        }
+    };
+
+    const handleDelete = () => {
+        setImageName("No file chosen");
+        setImageExist(false);
+        setSelectedFile(null)
+        if (fileInputRef.current) {
+            fileInputRef.current.value = ""; // Clear the input value
+        }
+    };
+
+    const triggerPicker = () => {
+        setChangeImageStatus("null")
+        fileInputRef.current?.click();
+    };
+
     const edit = async () => {
         if(session === "local" && username.current?.value) {
             try {
@@ -62,7 +92,7 @@ export function EditProfile(): JSX.Element {
 
         if(session === "cloud" && username.current?.value && email.current?.value) {
             try {
-                const res = await axios.patch(`${ApiUrl}/users/profile`, {
+                await axios.patch(`${ApiUrl}/users/profile`, {
                     "name": username.current?.value,
                     "email": email.current?.value
                 }, {
@@ -80,31 +110,125 @@ export function EditProfile(): JSX.Element {
         }
     }
 
+    const handleConfirm = async () => {
+        if (loadingChangeImage) return
+        if (!selectedFile) return
+
+        const formData = new FormData()
+        formData.append("_method", "PATCH")
+        formData.append("avatar", selectedFile)
+
+        try {
+            setChangeImageStatus("null")
+            setLoadingChangeImage(true)
+
+            await axios.post(`${ApiUrl}/users/profile`, formData, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("Authorization")}`
+                }
+            })
+
+            setLoadingChangeImage(false)
+            setChangeImageStatus("success")
+
+            handleDelete()
+        } catch (err) {
+            console.log(err)
+            setLoadingChangeImage(false)
+            setChangeImageStatus("reject")
+        }
+    }
+
+    // const handleDeleteConfirm = async () => {
+    //     if (loadingChangeImage) return
+
+    //     const formData = new FormData()
+    //     formData.append("_method", "PATCH")
+    //     formData.append("avatar", "")
+
+    //     try {
+    //         setChangeImageStatus("null")
+    //         setLoadingChangeImage(true)
+
+    //         await axios.post(`${ApiUrl}/users/profile`, formData, {
+    //             headers: {
+    //                 Authorization: `Bearer ${localStorage.getItem("Authorization")}`
+    //             }
+    //         })
+
+    //         setLoadingChangeImage(false)
+    //         setChangeImageStatus("success")
+
+    //         handleDelete()
+    //     } catch (err) {
+    //         console.log(err)
+    //         setLoadingChangeImage(false)
+    //         setChangeImageStatus("reject")
+    //     }
+    // }
+
+    const isConfirmSuccess = !imageExist && changeImageStatus === "success"
+    const isConfirmReject = !imageExist && changeImageStatus === "reject"
+    const isConfirmEnabled = imageExist
+    const confirmButtonClassName = cn(
+        "w-10",
+        isConfirmSuccess
+            ? "bg-green-600 text-white hover:bg-green-700"
+            : isConfirmReject
+                ? "bg-red-600 text-white hover:bg-red-700"
+                : isConfirmEnabled
+                    ? "bg-neutral-800 text-white"
+                    : "border-3 border-neutral-400 bg-transparent text-neutral-400 hover:bg-neutral-100"
+    )
+
     const changeProfileUI = (
         <DrawerFooter className="flex flex-col gap-8">
+            <input 
+                type="file" 
+                className="hidden" 
+                ref={fileInputRef} 
+                onChange={handleFileChange}
+                accept="image/*"
+            />
             <div className="flex gap-3 w-full">
-                <div className="border-2 border-neutral-400 flex-3 rounded-md flex justify-center items-center text-neutral-800">{imageName}</div>
+                <div className="border-2 border-neutral-400 flex-3 rounded-md flex justify-center items-center text-neutral-800 truncate">{imageName}</div>
                 { imageExist &&
-                    <Button className="border-3 border-red-500 bg-transparent text-red-500 hover:bg-neutral-100 w-10">
+                    <Button className="border-3 border-red-500 bg-transparent text-red-500 hover:bg-neutral-100 w-10" onClick={handleDelete}>
                         <FontAwesomeIcon icon={faTrash} className="text-[18px] text-red-500"></FontAwesomeIcon>
                     </Button>
                 }
-                <Button className={`${!imageExist ? "flex-1 bg-neutral-800" : "w-10 border-3 bg-transparent text-neutral-800 border-neutral-800"}`}>
+                <Button className={`${!imageExist ? "flex-1 bg-neutral-800" : "w-10 border-3 bg-transparent text-neutral-800 border-neutral-800"}`} onClick={triggerPicker}>
                     <FontAwesomeIcon icon={faUpload} className={`text-[19px]`}></FontAwesomeIcon>
                     { !imageExist && <p>Upload</p> }
                 </Button>
-                <Button className={`w-10 ${!imageExist ? "border-3 border-neutral-400 bg-transparent text-neutral-400 hover:bg-neutral-100" : "bg-neutral-800 text-white"}`}>
-                    <FontAwesomeIcon icon={faCheck} className="text-[18px]"></FontAwesomeIcon>
+                <Button className={confirmButtonClassName} onClick={handleConfirm}>
+                    {!loadingChangeImage && <FontAwesomeIcon icon={faCheck} className="text-[18px]"></FontAwesomeIcon>}
+                    {loadingChangeImage && <Spinner className="text-[20px]" />}
                 </Button>
             </div>
-            <Button onClick={() => setProfileState(false)}>Back</Button>
+            <Button className="bg-neutral-800" onClick={() => setProfileState(false)}>Back</Button>
+        </DrawerFooter>
+    )
+
+    const deleteConfirmationUI = (
+        <DrawerFooter className="flex flex-col gap-8 w-full">
+            <div className="flex flex-col justify-center items-center gap-3 h-20">
+                <p className="font-semibold text-base">Are you sure want to delete your photo profile?</p>
+                <Button className="flex-1 h-12 w-full bg-red-700">
+                    <FontAwesomeIcon icon={faTrash} ></FontAwesomeIcon>
+                    <p>Delete</p>
+                </Button>
+            </div>
+            <Button className="w-full" onClick={() => setDeleteConfirmation(false)}>Back</Button>
         </DrawerFooter>
     )
 
     const menuProfileUI = (
-        <DrawerFooter>
-            <Button onClick={() => setProfileState(true)}>Change Photo Profile</Button>
-            <Button>Delete Photo Profile</Button>
+        <DrawerFooter className="flex flex-col gap-8 w-full">
+            <div className="flex flex-col sm:flex-row gap-3">
+                <Button onClick={() => setProfileState(true)} className="flex-1 bg-neutral-800 h-12">Change Photo Profile</Button>
+                <Button onClick={() => setDeleteConfirmation(true)} className="flex-1 bg-neutral-800 h-12">Delete Photo Profile</Button>
+            </div>
             <DrawerClose className="w-full">
                 <Button className="w-full">Close</Button>
             </DrawerClose>
@@ -172,14 +296,15 @@ export function EditProfile(): JSX.Element {
                     {session === "cloud" &&
                             <Drawer>
                                 <DrawerTrigger className="h-30 w-30">
-                                <img src={userData.attributes.avatar} className="w-full h-full rounded-full" />
-                                <div className="flex justify-center items-center -translate-y-30 w-full h-full rounded-full bg-neutral-950 opacity-45">
-                                <FontAwesomeIcon icon={faCamera} className="text-5xl text-white" />
-                            </div>
+                                    <img src={`${StorageUrl}/${userData.attributes.avatar}`} className="w-full h-full rounded-full" />
+                                    <div className="flex justify-center items-center -translate-y-30 w-full h-full rounded-full bg-neutral-950 opacity-45">
+                                        <FontAwesomeIcon icon={faCamera} className="text-5xl text-white" />
+                                    </div>
                                 </DrawerTrigger>
-                                <DrawerContent className="w-screen md:w-[50%] md:absolute md:left-0 md:translate-x-[50%]"> 
-                                    {!profileState && menuProfileUI}
-                                    {profileState && changeProfileUI}
+                                <DrawerContent className="w-screen md:w-[50%] md:absolute md:left-0 md:translate-x-[50%]">
+                                    {!profileState && !deleteConfirmation && menuProfileUI}
+                                    {deleteConfirmation && deleteConfirmationUI}
+                                    {profileState && !deleteConfirmation && changeProfileUI}
                                 </DrawerContent>
                             </Drawer>
                     }
