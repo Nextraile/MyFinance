@@ -38,12 +38,16 @@ class ApiResponseHelper
             } else if (method_exists($data, 'toArray')) {
                 $arrayData = $data->toArray();
 
-                if (is_array($arrayData['data']) && array_key_exists('data', $arrayData)) {
-                    $response = array_merge_recursive($response, $arrayData);
+                if (is_array($arrayData) && array_key_exists('data', $arrayData)) {
+                    if (is_array($arrayData['data'])) {
+                        $response = array_merge_recursive($response, $arrayData);
+                    } else {
+                        $response['data'] = $arrayData['data'];
+                    }
                 } else {
-                    $response['data'] = $arrayData['data'];
+                    $response['data'] = $arrayData;
                 }
-                
+
             } else {
                 $response['data'] = $data;
             }
