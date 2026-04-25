@@ -22,7 +22,7 @@ class UserResource extends BaseResource
     public function toAttributes(Request $request)
     {
         $attributes = parent::toAttributes($request);
-        $attributes['avatar'] = $this->getAvatarUrlAttribute();
+        $attributes['avatar'] = $this->resource->getAvatarUrlAttribute();
 
         return $attributes;
     }

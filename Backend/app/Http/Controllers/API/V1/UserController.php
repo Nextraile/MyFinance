@@ -221,10 +221,11 @@ class UserController extends Controller
                     }
                 }
 
+                $oldEmail = $user->email;
                 $user->update($data);
                 
                 
-                if (isset($credentials['password']) || (isset($credentials['email']) && $credentials['email'] !== $user->email)) {
+                if (isset($credentials['password']) || (isset($credentials['email']) && $credentials['email'] !== $oldEmail)) {
                     if (isset($credentials['password'])) {
                         $column = 'password';
                     } else if (isset($credentials['email'])) {

@@ -26,30 +26,26 @@ class ApiResponseHelper
         }
 
         if (!empty($data)) {
-            if (method_exists($data, 'resolve')) {
-                $resolved = $data->resolve();
+            $normalized = $data;
 
-                if (is_array($resolved) && array_key_exists('data', $resolved)) {
-                    $response = array_merge_recursive($response, $resolved);
-                } else {
-                    $response['data'] = $resolved;
-                }
+            if (is_object($data) && method_exists($data, 'resolve')) {
+                $normalized = $data->resolve();
 
-            } else if (method_exists($data, 'toArray')) {
-                $arrayData = $data->toArray();
+            } else if (is_object($data) && method_exists($data, 'toArray')) {
+                $normalized = $data->toArray();
+            }
 
-                if (is_array($arrayData) && array_key_exists('data', $arrayData)) {
-                    if (is_array($arrayData['data'])) {
-                        $response = array_merge_recursive($response, $arrayData);
-                    } else {
-                        $response['data'] = $arrayData['data'];
+            if (is_array($normalized) && array_key_exists('data', $normalized)) {
+                $response['data'] = $normalized['data'];
+
+                foreach (['meta', 'links'] as $key) {
+                    if (array_key_exists($key, $normalized)) {
+                        $response[$key] = $normalized[$key];
                     }
-                } else {
-                    $response['data'] = $arrayData;
                 }
-
+                
             } else {
-                $response['data'] = $data;
+                $response['data'] = $normalized;
             }
         }
         
