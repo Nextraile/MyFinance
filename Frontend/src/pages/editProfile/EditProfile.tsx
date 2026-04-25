@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type JSX } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft, faCheck } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faCheck, faTrash, faUpload } from "@fortawesome/free-solid-svg-icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { faCamera } from "@fortawesome/free-regular-svg-icons";
@@ -21,6 +21,9 @@ export function EditProfile(): JSX.Element {
     const [ isCredentialDifferent, setIsCredentialDifferent ] = useState<boolean>(false)
     const [ session, setSession ] = useState<"cloud" | "local" | null>(null)
     const [ failed, setFailed ] = useState<boolean>(false)
+    const [ profileState, setProfileState ] = useState<boolean>(false)
+    const [ imageExist, isImageExist ] = useState<boolean>(false)
+    const [ imageName, setImageName ] = useState<string>("")
 
     const username = useRef<HTMLInputElement | null>(null)
     const email = useRef<HTMLInputElement | null>(null)
@@ -76,6 +79,39 @@ export function EditProfile(): JSX.Element {
             }
         }
     }
+
+    const changeProfileUI = (
+        <DrawerFooter className="flex flex-col gap-8">
+            <div className="flex gap-3 w-full">
+                <div className="border-2 border-neutral-400 flex-3 rounded-md flex justify-center items-center text-neutral-800">{imageName}</div>
+                { imageExist &&
+                    <Button className="border-3 border-red-500 bg-transparent text-red-500 hover:bg-neutral-100 w-10">
+                        <FontAwesomeIcon icon={faTrash} className="text-[18px] text-red-500"></FontAwesomeIcon>
+                    </Button>
+                }
+                <Button className={`${!imageExist ? "flex-1 bg-neutral-800" : "w-10 border-3 bg-transparent text-neutral-800 border-neutral-800"}`}>
+                    <FontAwesomeIcon icon={faUpload} className={`text-[19px]`}></FontAwesomeIcon>
+                    { !imageExist && <p>Upload</p> }
+                </Button>
+                <Button className={`w-10 ${!imageExist ? "border-3 border-neutral-400 bg-transparent text-neutral-400 hover:bg-neutral-100" : "bg-neutral-800 text-white"}`}>
+                    <FontAwesomeIcon icon={faCheck} className="text-[18px]"></FontAwesomeIcon>
+                </Button>
+            </div>
+            <Button onClick={() => setProfileState(false)}>Back</Button>
+        </DrawerFooter>
+    )
+
+    const menuProfileUI = (
+        <DrawerFooter>
+            <Button onClick={() => setProfileState(true)}>Change Photo Profile</Button>
+            <Button>Delete Photo Profile</Button>
+            <DrawerClose className="w-full">
+                <Button className="w-full">Close</Button>
+            </DrawerClose>
+        </DrawerFooter>
+    )
+
+
 
     return (
         <section className="flex flex-col items-center">
@@ -142,13 +178,8 @@ export function EditProfile(): JSX.Element {
                             </div>
                                 </DrawerTrigger>
                                 <DrawerContent className="w-screen md:w-[50%] md:absolute md:left-0 md:translate-x-[50%]"> 
-                                    <DrawerFooter>
-                                        <Button>Change Photo Profile</Button>
-                                        <Button>Delete Photo Profile</Button>
-                                        <DrawerClose className="w-full">
-                                            <Button className="w-full">Close</Button>
-                                        </DrawerClose>
-                                    </DrawerFooter>
+                                    {!profileState && menuProfileUI}
+                                    {profileState && changeProfileUI}
                                 </DrawerContent>
                             </Drawer>
                     }
