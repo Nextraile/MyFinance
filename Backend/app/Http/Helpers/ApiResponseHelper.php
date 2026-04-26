@@ -3,6 +3,7 @@
 namespace App\Http\Helpers;
 
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\JsonApi\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 
 class ApiResponseHelper
@@ -28,7 +29,15 @@ class ApiResponseHelper
         if (!empty($data)) {
             $normalized = $data;
 
-            if (is_object($data) && method_exists($data, 'resolve')) {
+            if ($data instanceof AnonymousResourceCollection || $data instanceof JsonResponse) {
+                if ($data instanceof AnonymousResourceCollection) {
+                    $normalized = $data->response()->getData(true);
+
+                } else {
+                    $normalized = $data->getData(true);
+                }
+                
+            } else if (is_object($data) && method_exists($data, 'resolve')) {
                 $normalized = $data->resolve();
 
             } else if (is_object($data) && method_exists($data, 'toArray')) {
