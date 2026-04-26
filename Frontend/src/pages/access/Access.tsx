@@ -19,6 +19,7 @@ export function Access(): JSX.Element {
     const [ isOut, setIsOut ] = useState<boolean>(false)
     const [ isInvalidCredentials, setIsInvalidCredentials ] = useState<boolean>(false)
     const [ isInternalServerError, setIsInternalServerError ] = useState<boolean>(false)
+    const [ isNewDeviceDetected, setIsNewDeviceDetected ] = useState<boolean>(false)
     const [ isError, setIsError ] = useState<boolean>(false)
     const [ isLocalSupported, setIsLocalSupported ] = useState<boolean>(false)
 
@@ -40,6 +41,7 @@ export function Access(): JSX.Element {
         console.log(ApiUrl)
         setIsInternalServerError(false)
         setIsInvalidCredentials(false)
+        setIsNewDeviceDetected(false)
         setIsError(false)
         try {
             const res = await axios.post(`${ApiUrl}/auth/tokens`, {
@@ -59,6 +61,9 @@ export function Access(): JSX.Element {
                 console.log("error", err)
                 if(err.response?.status === 422) {
                     setIsInvalidCredentials(true)
+                    setIsError(true)
+                } else if(err.response?.status === 403 && err.response?.data?.status === 'NEW_DEVICE_LOGIN_DETECTED') {
+                    setIsNewDeviceDetected(true)
                     setIsError(true)
                 } else {
                     setIsError(true)
@@ -165,13 +170,16 @@ export function Access(): JSX.Element {
                                     }
                                 }}
                             >
-                                <Alert variant="destructive" className="w-full bg-background-primary dark:bg-background-primary-dark">
+                                <Alert variant={isNewDeviceDetected ? "default" : "destructive"} className={`w-full ${isNewDeviceDetected ? "bg-yellow-50 border-yellow-200 dark:bg-yellow-950/20 dark:border-yellow-800" : "bg-background-primary dark:bg-background-primary-dark"}`}>
                                     <AlertCircleIcon />
-                                    <AlertTitle className="font-semibold tracking-normal">Sign In Failed</AlertTitle>
+                                    <AlertTitle className="font-semibold tracking-normal">{isNewDeviceDetected ? "New Device Detected" : "Sign In Failed"}</AlertTitle>
                                     <AlertDescription>
                                         <ul className="list-inside list-disc text-sm">
                                         {isInvalidCredentials && 
                                             <li>Email or password is wrong.</li>
+                                        }
+                                        {isNewDeviceDetected && 
+                                            <li>We detected a login from a new device. Please check your email to verify and continue.</li>
                                         }
                                         {isInternalServerError && 
                                             <li>Internal server error. Please wait and try again.</li>
