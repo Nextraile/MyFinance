@@ -328,7 +328,7 @@ export function EditProfile(): JSX.Element {
                     {session === "cloud" &&
                             <Drawer>
                                 <DrawerTrigger className="h-30 w-30">
-                                    <img src={`${StorageUrl}/${userData.attributes.avatar}`} className="w-full h-full rounded-full" />
+                                    <img src={userData.attributes.avatar} className="w-full h-full rounded-full object-cover" />
                                     <div className="flex justify-center items-center -translate-y-30 w-full h-full rounded-full bg-neutral-950 opacity-45">
                                         <FontAwesomeIcon icon={faCamera} className="text-5xl text-white" />
                                     </div>
