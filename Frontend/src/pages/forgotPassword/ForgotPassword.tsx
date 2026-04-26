@@ -40,17 +40,22 @@ export function ForgotPassword(): JSX.Element {
         setIsLoading(true)
 
         try {
-            await axios.post(`${ApiUrl}/api/auth/forgot-password`, {
+            const res = await axios.post(`${ApiUrl}/auth/password-resets`, {
                 email: values.email
             })
             setIsLoading(false)
             setIsSuccess(true)
 
+            setIsOut(true)
+            setTimeout(() => {window.location.href = ""}, 400)
+
         } catch (err) {
             setIsLoading(false)
-            
+
+            console.log(err)
+
             if (isAxiosError(err)) {
-                if (err.response?.status === 404) {
+                if (err.response?.status === 422) {
                     setIsNotFound(true)
                     setIsError(true)
                 } else {
