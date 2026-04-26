@@ -6,6 +6,11 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
+  server: {
+    watch: {
+      usePolling: true
+    }
+  },
   plugins: [react(), tailwindcss(), VitePWA({
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
