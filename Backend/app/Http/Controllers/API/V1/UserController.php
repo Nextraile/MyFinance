@@ -171,10 +171,6 @@ class UserController extends Controller
         $message = null;
         $mustNotBeEmptyFields = ['name', 'email', 'password'];
 
-        if (array_key_exists('new_password', $credentials)) {
-            $credentials['password'] = $credentials['new_password'];
-        }
-
         try {
 
             DB::transaction(function () use ($request, $credentials, $user, $mustNotBeEmptyFields, &$message) {
