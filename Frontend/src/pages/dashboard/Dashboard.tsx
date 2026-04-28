@@ -338,7 +338,7 @@ export function Dashboard(): JSX.Element {
                                             </motion.div>
                                             <div>
                                                 <h3 className="font-medium text-[15px]">{session === "cloud" ? mainLoaderData?.attributes.name : mainLoaderData?.name}</h3>
-                                                <p className="font-medium text-xs text-black/80 dark:text-white/80">{session === "cloud" ? mainLoaderData?.attributes.email : mainLoaderData?.email}</p>
+                                                <p className="font-medium text-xs text-black/80 dark:text-white/80 overflow-hidden whitespace-nowrap text-ellipsis max-w-27">{session === "cloud" ? mainLoaderData?.attributes.email : mainLoaderData?.email}</p>
                                             </div>
                                             
                                         </div>
@@ -370,6 +370,7 @@ export function Dashboard(): JSX.Element {
                                         </motion.div>
                                         {session === "cloud" && 
                                             <motion.div 
+                                                onClick={() => {setIsOut(true); setTimeout(() => window.location.href = "/app/change-password", 500)}}
                                                 className="flex items-center gap-2.5 bg-green-500/20 dark:bg-violet-700/40 rounded-full py-2 px-4 w-full"
                                                 whileTap={{
                                                     scale: 0.95
