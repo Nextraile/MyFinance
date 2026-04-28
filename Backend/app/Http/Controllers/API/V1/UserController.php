@@ -176,7 +176,7 @@ class UserController extends Controller
                     $this->userService->changeVerifiedEmail($user);
                     $user->markEmailAsVerified();
                     $this->userService->revokeAllTokensExceptCurrent($user);
-                    $this->authService->unsetKnownDevicesExceptCurrent($user);
+                    $this->authService->unsetKnownDevicesExceptCurrent($user, $request->userAgent());
                     $this->authService->sendCredentialsChangesNotification($currentEmail, 'email');
 
                     $message = 'Email updated and verified successfully.';
@@ -224,7 +224,7 @@ class UserController extends Controller
 
                 if (isset($credentials['password']) || (!empty($credentials['email']) && $credentials['email'] !== $currentEmail)) {
                     $this->userService->revokeAllTokensExceptCurrent($user);
-                    $this->authService->unsetKnownDevicesExceptCurrent($user);
+                    $this->authService->unsetKnownDevicesExceptCurrent($user, $request->userAgent());
 
                     if ($user->isVerified()) {
                         $this->authService->sendCredentialsChangesNotification($currentEmail, 'password');

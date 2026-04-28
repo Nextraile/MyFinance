@@ -98,10 +98,10 @@ class AuthService
         $user->save();
     }
 
-    public function unsetKnownDevicesExceptCurrent(User $user): void
+    public function unsetKnownDevicesExceptCurrent(User $user, string $userAgent): void
     {
         $devices = collect($user->known_devices);
-        $currentDeviceHash = $this->hashDevice($user->id, request()->userAgent());
+        $currentDeviceHash = $this->hashDevice($user->id, $userAgent);
 
         $devices = $devices->filter(fn($device) => $device['hash'] === $currentDeviceHash);
 

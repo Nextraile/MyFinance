@@ -4,9 +4,6 @@ namespace App\Http\Requests\API\V1\User\Auth;
 
 use App\Models\User;
 use App\Services\API\V1\AuthService;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 

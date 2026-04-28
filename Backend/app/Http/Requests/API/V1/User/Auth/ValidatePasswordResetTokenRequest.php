@@ -3,10 +3,7 @@
 namespace App\Http\Requests\API\V1\User\Auth;
 
 use App\Services\API\V1\AuthService;
-use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class ValidatePasswordResetTokenRequest extends FormRequest
@@ -47,7 +44,7 @@ class ValidatePasswordResetTokenRequest extends FormRequest
 
     public function passedValidation()
     {
-        if (AuthService::make()->isPasswordResetTokenValid($this->input('email'), $this->input('token'))) {
+        if (!AuthService::make()->isPasswordResetTokenValid($this->input('email'), $this->input('token'))) {
             throw new UnprocessableEntityHttpException('Invalid credentials');
         }
     }
