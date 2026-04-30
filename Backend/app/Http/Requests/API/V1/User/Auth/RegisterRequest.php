@@ -43,7 +43,9 @@ class RegisterRequest extends FormRequest
      */
     public function messages()
     {
-        return [];
+        return [
+            'email.unique' => 'Invalid email address.',
+        ];
     }
 
     public function passedValidation()

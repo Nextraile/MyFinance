@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 
 class VerificationEmailNotification extends Notification implements ShouldQueue
 {
@@ -35,26 +36,18 @@ class VerificationEmailNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        // $url = config('app.frontend_url') . '/auth/email-verifications?credentials=' . http_build_query([
-        //     'token' => $this->token,
-        //     'email' => $notifiable->getEmailForVerification(),
-        // ]);
+        $data = ['id' => $notifiable->getKey(), 'hash' => sha1($notifiable->getEmailForVerification())];
+        $expires = now()->addMinutes(config('auth.verification.expire'))->getTimestamp();
+        $backendUrl = URL::temporarySignedRoute('api.v1.auth.email.verify', $expires, $data);
+        $queryParams = Str::after($backendUrl, '?');
 
-        // Backend route with signed URL
-        $url = URL::temporarySignedRoute(
-            'api.v1.auth.email.verify',
-            now()->addMinutes(config('auth.verification.expire')),
-            [
-                'id' => $notifiable->getKey(),
-                'hash' => sha1($notifiable->getEmailForVerification()),
-            ]
-        );
+        $frontendUrl = config('app.frontend_url') . "/verify-email/{$data['id']}/{$data['hash']}?{$queryParams}";
         
         return (new MailMessage)
             ->subject('Verify Your Email Address - ' . config('app.name'))
             ->greeting('Hello!')
             ->line('You are receiving this email because we received an email verification request for your account.')
-            ->action('Verify Email', $url)
+            ->action('Verify Email', $frontendUrl)
             ->line('This verification link will expire in ' . config('auth.verification.expire') . ' minutes.')
             ->line('If you did not request an email verification, no further action is required.')
             ->salutation('Regards, ' . config('app.name'));

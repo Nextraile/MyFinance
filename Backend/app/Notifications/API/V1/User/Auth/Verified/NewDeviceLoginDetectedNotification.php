@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 
 class NewDeviceLoginDetectedNotification extends Notification implements ShouldQueue
 {
@@ -15,7 +16,7 @@ class NewDeviceLoginDetectedNotification extends Notification implements ShouldQ
     /**
      * Create a new notification instance.
      */
-    public function __construct(public $hash)
+    public function __construct(public string $hash)
     {
         $this->hash = $hash;
     }
@@ -35,26 +36,18 @@ class NewDeviceLoginDetectedNotification extends Notification implements ShouldQ
      */
     public function toMail(object $notifiable): MailMessage
     {
-        // $url = config('app.frontend_url') . '/auth/email-verifications?credentials=' . http_build_query([
-        //     'token' => $this->token,
-        //     'email' => $notifiable->getEmailForVerification(),
-        // ]);
-
-        // Backend route with signed URL
-        $url = URL::temporarySignedRoute(
-            'api.v1.auth.login.new-device',
-            now()->addMinutes(config('auth.verification.expire')),
-            [
-                'email' => $notifiable->getEmailForVerification(),
-                'hash' => $this->hash,
-            ]
-        );
+        $data = ['email' => $notifiable->getEmailForVerification(), 'hash' => $this->hash];
+        $expires = now()->addMinutes(config('auth.verification.expire'))->getTimestamp();
+        $backendUrl = URL::temporarySignedRoute('api.v1.auth.login.new-device', $expires, $data);
+        $queryParams = Str::after($backendUrl, '?');
+        
+        $frontendUrl = config('app.frontend_url') . "/new-location/{$data['email']}/{$data['hash']}?{$queryParams}";
         
         return (new MailMessage)
             ->subject('Verify Your New Device - ' . config('app.name'))
             ->greeting('Hello!')
             ->line('You are receiving this email because we received a new device login request for your account.')
-            ->action('Verify Device', $url)
+            ->action('Verify Device', $frontendUrl)
             ->line('This verification link will expire in ' . config('auth.verification.expire') . ' minutes.')
             ->line('If you did not request a new device login, no further action is required.')
             ->salutation('Regards, ' . config('app.name'));

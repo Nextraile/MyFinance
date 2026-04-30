@@ -14,7 +14,7 @@ class CredentialsChangesNotification extends Notification implements ShouldQueue
     /**
      * Create a new notification instance.
      */
-    public function __construct(public $field = null)
+    public function __construct(public ?string $field = null)
     {
         $this->field = $field;
     }
