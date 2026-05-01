@@ -19,6 +19,8 @@ import newLocation from "./routes/NewLocationRoute";
 import frequentlyAskedQuestions from "./routes/FAQRoute";
 import privacyPolicy from "./routes/PrivacyPolicyRoute";
 import termsOfService from "./routes/TermsOfServiceRoute";
+import verifyEmail from "./routes/verifyEmailRoute";
+import verifyNewEmail from "./routes/verifyNewEmailRoute";
 
 const routes = createBrowserRouter([
     {path: "/app", element: <MainPage />, id: "main", loader: appLoader, children: [
@@ -29,14 +31,16 @@ const routes = createBrowserRouter([
         report,
         changePassword
     ]},
-    transfer,
     access,
     signup,
     signupLocal,
+    newLocation,
+    transfer,
     forgotPassword,
     forgotPasswordEmailSent,
     passwordReset,
-    newLocation,
+    verifyEmail,
+    verifyNewEmail,
     termsOfService,
     privacyPolicy,
     frequentlyAskedQuestions,
