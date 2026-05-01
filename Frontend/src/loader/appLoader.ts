@@ -62,11 +62,9 @@ const appLoader = async () => {
         } catch(err) {
             if(isAxiosError(err)) {
                 console.log(err)
-                if(err.response?.status === 401) {
                     // =[Output 3: kicked because has no valid AuthToken]=
+                    localStorage.removeItem("Authorization")
                     window.location.href = "/access"
-                }
-                // need a cather for server error
             }
         }
     }
