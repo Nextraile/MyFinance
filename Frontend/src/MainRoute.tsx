@@ -18,6 +18,7 @@ import forgotPassword from "./routes/ForgotPasswordRoute";
 import forgotPasswordEmailSent from "./routes/ForgotPasswordEmailSentRoute";
 import passwordReset from "./routes/PasswordResetRoute";
 import changePassword from "./routes/ChangePasswordRoute";
+import newLocation from "./routes/NewLocationRoute";
 
 const routes = createBrowserRouter([
     {path: "/app", element: <MainPage />, id: "main", loader: appLoader, children: [
@@ -35,6 +36,7 @@ const routes = createBrowserRouter([
     forgotPassword,
     forgotPasswordEmailSent,
     passwordReset,
+    newLocation,
     notFound,
     TermsOfServiceRoute,
     PrivacyPolicyRoute,
