@@ -1,8 +1,8 @@
 import { FAQ } from "@/pages/FAQ/FAQ"
 
-const FAQRoute = {
+const frequentlyAskedQuestions = {
     path: "/faq",
     element: <FAQ />
 }
 
-export default FAQRoute
+export default frequentlyAskedQuestions

@@ -1,8 +1,8 @@
 import { TermsOfService } from "@/pages/TermsOfService/TermsOfService"
 
-const TermsOfServiceRoute = {
+const termsOfService = {
     path: "/tos",
     element: <TermsOfService />
 }
 
-export default TermsOfServiceRoute
+export default termsOfService
