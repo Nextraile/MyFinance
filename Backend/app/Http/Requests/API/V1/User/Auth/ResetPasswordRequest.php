@@ -4,12 +4,12 @@ namespace App\Http\Requests\API\V1\User\Auth;
 
 use App\Models\User;
 use App\Services\API\V1\AuthService;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
-use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
-class ResetPasswordRequest extends BaseRequest
+class ResetPasswordRequest extends FormRequest
 {
-    public User $user;
+    public ?User $user = null;
 
     /**
      * Determine if the user is authorized to make this request.
@@ -41,32 +41,29 @@ class ResetPasswordRequest extends BaseRequest
         ];
     }
 
-    public function messages()
-    {
-        return array_merge(parent::messages(), [
-            //
-        ]);
-    }
-
     public function prepareForValidation()
     {
-        $token = $this->route('token');
-        $email = $this->route('email');
-
-        if ($token && $email) {
-            $this->merge([
-                'token' => $token,
-                'email' => $email
-            ]);
-        }
+        $encryptedToken = $this->route('credentials');
+        $decryptedData = AuthService::make()->decryptPasswordResetToken($encryptedToken);
+        
+        $this->merge($decryptedData);
     }
 
     public function passedValidation()
     {
-        if (!AuthService::make()->isPasswordResetTokenValid($this->input('email'), $this->input('token'))) {
-            throw new UnprocessableEntityHttpException('Invalid credentials');
+        $email = $this->safe()->email;
+        $token = $this->safe()->token;
+
+        if (!AuthService::make()->isPasswordResetTokenValid($email, $token)) {
+            abort(422, 'Invalid credentials');
         }
 
-        $this->user = User::where('email', $this->input('email'))->first();
+        $user = User::where('email', $email)->first();
+
+        if (empty($user)) {
+            abort(422, 'Invalid credentials');
+        }
+
+        $this->user = $user;
     }
 }

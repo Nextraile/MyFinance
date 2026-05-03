@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 
 class ResetPasswordNotification extends Notification implements ShouldQueue
 {
@@ -15,9 +16,10 @@ class ResetPasswordNotification extends Notification implements ShouldQueue
     /**
      * Create a new notification instance.
      */
-    public function __construct(public $token)
+    public function __construct(public string $credentials, public int $expiresInMinutes)
     {
-        $this->token = $token;
+        $this->credentials = $credentials;
+        $this->expiresInMinutes = $expiresInMinutes;
     }
 
     /**
@@ -35,30 +37,20 @@ class ResetPasswordNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        // Frontend route
-        // $url = config('app.frontend_url') . '/reset-password?' . http_build_query([
-        // 'token' => $this->token,
-        // 'email' => $notifiable->email
-        // ]);
+        $credentials = ['credentials' => $this->credentials];
+        $expires = now()->addMinutes($this->expiresInMinutes);
+        $backendUrl = URL::temporarySignedRoute('api.v1.auth.password-resets.update', $expires, $credentials);
+        $queryParams = Str::after($backendUrl, '?');
+        $urlEncodedCredentials = ['credentials' => urlencode($this->credentials)];
 
-        // Backend Route
-        // $url = config('app.url') . '/auth/password-resets?credentials=' . Crypt::encrypt(http_build_query([
-        //     'token' => $this->token,
-        //     'email' => $notifiable->getEmailForPasswordReset(),
-        // ]));
-
-        $url = URL::temporarySignedRoute(
-            'api.v1.auth.password-resets.update',
-            now()->addMinutes(config('auth.passwords.users.expire')),
-            ['token' => $this->token, 'email' => $notifiable->getEmailForPasswordReset()]
-        );
+        $frontendUrl = config('app.frontend_url') . "/password-resets/{$urlEncodedCredentials}?{$queryParams}";
 
         return (new MailMessage)
             ->subject('Reset Your Password - ' . config('app.name'))
             ->greeting('Hello!')
             ->line('You are receiving this email because we received a password reset request for your account.')
-            ->action('Reset Password', $url)
-            ->line('This password reset link will expire in ' . config('auth.passwords.users.expire') . ' minutes.')
+            ->action('Reset Password', $frontendUrl)
+            ->line('This password reset link will expire in ' . $this->expiresInMinutes . ' minutes.')
             ->line('If you did not request a password reset, no further action is required.')
             ->salutation('Regards, ' . config('app.name'));
     }

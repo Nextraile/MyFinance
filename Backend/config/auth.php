@@ -112,6 +112,10 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    'new_device_login' => [
+        'expire' => env('AUTH_NEW_DEVICE_LOGIN_EXPIRE', 60),
+    ],
+    
     'verification' => [
         'expire' => env('AUTH_VERIFICATION_EXPIRE', 60),
     ],

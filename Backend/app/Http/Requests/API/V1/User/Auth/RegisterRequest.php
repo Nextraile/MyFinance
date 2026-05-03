@@ -4,6 +4,7 @@ namespace App\Http\Requests\API\V1\User\Auth;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
 class RegisterRequest extends FormRequest
@@ -25,7 +26,13 @@ class RegisterRequest extends FormRequest
     {
         return [
             'name' => 'required|string|min:3|max:50',
-            'email' => 'required|string|email|max:255|unique:users',
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                Rule::unique('users')->where(fn($query) => $query->orWhere('pending_email', $this->input('email')))
+            ],
             'password' => [
                 'required',
                 'confirmed',

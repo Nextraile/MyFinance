@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\API\V1\User;
 
+use App\Models\User;
+use App\Services\API\V1\AuthService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
@@ -10,8 +12,9 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class UpdateProfileRequest extends FormRequest
 {
-    public ?string $newPassword = null;
+    public ?User $user = null;
     public ?string $currentEmail = null;
+    public ?string $newPassword = null;
 
     /**
      * Determine if the user is authorized to make this request.
@@ -30,8 +33,7 @@ class UpdateProfileRequest extends FormRequest
     {
         if ($this->routeIs('api.v1.users.update.verify.new-email')) {
             return [
-                'id' => 'required|exists:users,id',
-                'hash' => 'required|string',
+                'key' => 'required|string',
             ];
         }
 
@@ -43,8 +45,8 @@ class UpdateProfileRequest extends FormRequest
                 'string',
                 'email',
                 'max:255',
-                Rule::unique('users')->ignore($this->user()->id),
-                Rule::unique('users', 'pending_email')->ignore($this->user()->id),
+                Rule::unique('users', 'email')->ignore($this->user()->id)
+                ->where(fn($query) => $query->where('email', $this->email)->orWhere('pending_email', $this->email)),
             ],
             'old_password' => 'sometimes|required_with:new_password|current_password',
             'new_password' => [
@@ -62,10 +64,9 @@ class UpdateProfileRequest extends FormRequest
     public function prepareForValidation()
     {
         if ($this->routeIs('api.v1.users.update.verify.new-email')) {
-            if ($this->route('id') && $this->route('hash')) {
-                $this->merge([
-                    'id' => $this->route('id'),
-                    'hash' => $this->route('hash'),
+            if ($this->route('key')) {
+                 $this->merge([
+                    'key' => $this->route('key')
                 ]);
             }
         }
@@ -79,26 +80,39 @@ class UpdateProfileRequest extends FormRequest
 
     public function passedValidation()
     {
-        $user = $this->user();
-        if ($this->hasAny(['email', 'id', 'old_password'])) {
-            $this->currentEmail = $user->getEmailForVerification();
-        }
-
         if ($this->routeIs('api.v1.users.update.verify.new-email')) {
-            if ($user->pending_email == null) {
-                throw new UnprocessableEntityHttpException('No pending email to verify.');
-            }
+            $values = AuthService::make()->retrieveEncryptedCachedData("new_email_verification_from_verified_user", $this->safe()->key);
             
-            if (empty($this->hash) ||
-                !hash_equals($this->hash, sha1($user->pending_email))) {
-                throw new UnprocessableEntityHttpException('Invalid credentials.');
+            if (empty($values) || !is_array($values)) {
+                abort(422, 'Invalid credentials.');
             }
+
+            $user = User::find($values['user_id']);
+            $newEmail = $values['new_email'] ?? null;
+
+            if (!$user) {
+                abort(404, 'User not found.');
+
+            } else if ($user->pending_email == null) {
+                abort(422, 'No pending email to verify.');
+
+            } else if ($user->pending_email !== $newEmail) {
+                abort(422, 'Invalid email.');
+            }
+
+             $this->user = $user;
         }
 
         if ($this->routeIs('api.v1.users.update')) {
+            $this->user = $this->user();
+
             if (!empty($this->input('new_password'))) {
                 $this->newPassword = Hash::make($this->input('new_password'));
             }
+        }
+
+        if ($this->hasAny(['email', 'key', 'old_password'])) {
+            $this->currentEmail = $this->user->getEmailForVerification();
         }
     }
 }
