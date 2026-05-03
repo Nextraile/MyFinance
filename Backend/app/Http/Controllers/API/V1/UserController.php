@@ -203,7 +203,7 @@ class UserController extends Controller
                         unset($credentials['email']);
 
                         $key = $this->authService->encryptAndCacheData("new_email_verification_from_verified_user", $data, config('auth.verification.expire'));
-                        $this->authService->sendVerifiedEmailChangedNotification($user, $key);
+                        $this->authService->sendVerifiedEmailChangedNotification($user->pending_email, $key);
 
                         $message = 'Please verify your new email address to finish the process.';
                 }

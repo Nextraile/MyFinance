@@ -77,7 +77,7 @@ class LoginRequest extends BaseRequest
             $this->deviceHash = AuthService::make()->hashDevice($this->user->id, $this->userAgent());
         }
 
-        if (empty($this->user) && empty($this->deviceHash)) {
+        if (empty($this->user) || empty($this->deviceHash)) {
             abort(422, 'Invalid credentials.');
         }
 

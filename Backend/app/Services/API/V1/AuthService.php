@@ -181,10 +181,10 @@ class AuthService
         $user->notify(new VerificationEmailNotification($key, $expiresInMinutes));
     }
 
-    public function sendVerifiedEmailChangedNotification(User $user, string $key, ?int $expiresInMinutes = null): void
+    public function sendVerifiedEmailChangedNotification(string $email, string $key, ?int $expiresInMinutes = null): void
     {
         $expiresInMinutes = $expiresInMinutes ?? config('auth.verification.expire');
-        $user->notify(new VerifiedEmailChangedNotification($key, $expiresInMinutes));
+        Notification::route('mail', $email)->notify(new VerifiedEmailChangedNotification($key, $expiresInMinutes));
     }
 
     public function sendCredentialsChangesNotification(string $email, string $fields): void
