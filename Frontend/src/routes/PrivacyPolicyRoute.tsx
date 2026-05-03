@@ -1,8 +1,8 @@
 import { PrivacyPolicy } from "@/pages/privacyPolicy/PrivacyPolicy";
 
-const PrivacyPolicyRoute = {
+const privacyPolicy = {
     path: "/policy",
     element: <PrivacyPolicy />
 }
 
-export default PrivacyPolicyRoute
+export default privacyPolicy

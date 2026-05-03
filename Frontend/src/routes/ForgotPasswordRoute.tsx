@@ -1,4 +1,4 @@
-import { ForgotPassword } from "@/pages/forgotPassword/forgotPassword"
+import { ForgotPassword } from "@/pages/forgotPassword/ForgotPassword"
 
 const forgotPassword = {
     path: "forgot-password",

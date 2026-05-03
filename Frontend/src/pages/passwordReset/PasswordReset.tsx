@@ -84,8 +84,8 @@ export function PasswordReset(): JSX.Element {
         console.log("Token:", token)
         console.log("search :", search)
 
-        setStatus("ok")
-        // checkValidityAndSetStatus()
+        setStatus("checking")
+        checkValidityAndSetStatus()
     }, []);
 
     return (
