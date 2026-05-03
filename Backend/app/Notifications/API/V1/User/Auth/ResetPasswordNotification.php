@@ -41,8 +41,9 @@ class ResetPasswordNotification extends Notification implements ShouldQueue
         $expires = now()->addMinutes($this->expiresInMinutes);
         $backendUrl = URL::temporarySignedRoute('api.v1.auth.password-resets.update', $expires, $credentials);
         $queryParams = Str::after($backendUrl, '?');
+        $urlEncodedCredentials = ['credentials' => urlencode($this->credentials)];
 
-        $frontendUrl = config('app.frontend_url') . "/password-resets/{$credentials}?{$queryParams}";
+        $frontendUrl = config('app.frontend_url') . "/password-resets/{$urlEncodedCredentials}?{$queryParams}";
 
         return (new MailMessage)
             ->subject('Reset Your Password - ' . config('app.name'))

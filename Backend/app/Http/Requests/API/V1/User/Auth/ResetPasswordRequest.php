@@ -9,7 +9,7 @@ use Illuminate\Validation\Rules\Password;
 
 class ResetPasswordRequest extends FormRequest
 {
-    public User $user;
+    public ?User $user = null;
 
     /**
      * Determine if the user is authorized to make this request.
@@ -58,6 +58,12 @@ class ResetPasswordRequest extends FormRequest
             abort(422, 'Invalid credentials');
         }
 
-        $this->user = User::where('email', $email)->first();
+        $user = User::where('email', $email)->first();
+
+        if (empty($user)) {
+            abort(422, 'Invalid credentials');
+        }
+
+        $this->user = $user;
     }
 }

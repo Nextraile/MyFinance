@@ -61,6 +61,6 @@ class VerifyEmailRequest extends FormRequest
             abort(422, 'Email is already verified.');
         }
 
-        $this->currentDeviceHash = AuthService::make()->hashDevice($this->user->id, $this->header('User-Agent'));
+        $this->currentDeviceHash = AuthService::make()->hashDevice($this->user->id, $this->userAgent());
     }
 }

@@ -67,13 +67,12 @@ class UserController extends Controller
                     $this->authService->addDevice($user, $deviceHash);
 
                 } else {
-                    // $uuid = $this->authService->makeNewDeviceLoginToken($user->getKey(), $deviceHash);
                     $value = [
                         'user_id' => $user->getKey(),
                         'device_hash' => $deviceHash,
                     ];
 
-                    $key = $this->authService->encryptAndCacheData("new_device_login", $value, config('auth.verification.expire'));
+                    $key = $this->authService->encryptAndCacheData("new_device_login", $value, config('auth.new_device_login.expire'));
                     $this->authService->sendNewDeviceLoginDetectedNotification($user, $key);
 
                     throw new NewDeviceLoginDetectedException('Please check your email to continue.');
@@ -105,8 +104,8 @@ class UserController extends Controller
         if ($user) {
             $email = $request->safe()->email;
             $token = $this->authService->makePasswordResetToken($user);
-            $encryptedToken = $this->authService->encryptPasswordResetToken($email, $token);
-            $this->authService->sendResetPasswordNotification($email, $encryptedToken);
+            $encryptedCredentials = $this->authService->encryptPasswordResetToken($email, $token);
+            $this->authService->sendResetPasswordNotification($email, $encryptedCredentials);
         }
 
         return ApiResponseHelper::successResponse(

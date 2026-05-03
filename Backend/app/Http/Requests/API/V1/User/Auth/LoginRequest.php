@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\Hash;
 
 class LoginRequest extends BaseRequest
 {
-    public ?User $user;
-    public ?string $deviceHash;
+    public User $user;
+    public string $deviceHash;
 
     /**
      * Determine if the user is authorized to make this request.
@@ -70,7 +70,6 @@ class LoginRequest extends BaseRequest
 
             $this->user = User::where('id', $userId)->first();
             $this->deviceHash = $values['device_hash'] ?? null;
-
         } 
         
         if ($this->routeIs('api.v1.auth.login')) {
@@ -78,7 +77,7 @@ class LoginRequest extends BaseRequest
             $this->deviceHash = AuthService::make()->hashDevice($this->user->id, $this->userAgent());
         }
 
-        if (!$this->user) {
+        if (empty($this->user) && empty($this->deviceHash)) {
             abort(422, 'Invalid credentials.');
         }
 
