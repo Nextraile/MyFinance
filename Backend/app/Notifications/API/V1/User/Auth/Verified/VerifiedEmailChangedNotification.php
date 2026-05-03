@@ -16,9 +16,10 @@ class VerifiedEmailChangedNotification extends Notification implements ShouldQue
     /**
      * Create a new notification instance.
      */
-    public function __construct(public string $newEmail)
+    public function __construct(public string $key, public int $expiresInMinutes)
     {
-        $this->newEmail = $newEmail;
+        $this->key = $key;
+        $this->expiresInMinutes = $expiresInMinutes;
     }
 
     /**
@@ -36,19 +37,19 @@ class VerifiedEmailChangedNotification extends Notification implements ShouldQue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $data = ['id' => $notifiable->getKey(), 'hash' => sha1($this->newEmail)];
-        $expires = now()->addMinutes(config('auth.verification.expire'))->getTimestamp();
+        $data = $this->key;
+        $expires = now()->addMinutes($this->expiresInMinutes)->getTimestamp();
         $backendUrl = URL::temporarySignedRoute('api.v1.users.update.verify.new-email', $expires, $data);
         $queryParams = Str::after($backendUrl, '?');
 
-        $frontendUrl = config('app.frontend_url') . "/verify-new-email/{$data['id']}/{$data['hash']}?{$queryParams}";
+        $frontendUrl = config('app.frontend_url') . "/verify-new-email/{$data}?{$queryParams}";
         
         return (new MailMessage)
             ->subject('Verify Your New Email Address - ' . config('app.name'))
             ->greeting('Hello!')
             ->line('You are receiving this email because we received an email update request for your account.')
             ->action('Verify New Email', $frontendUrl)
-            ->line('This verification link will expire in ' . config('auth.verification.expire') . ' minutes.')
+            ->line('This verification link will expire in ' . $this->expiresInMinutes . ' minutes.')
             ->line('If you did not request an email update, no further action is required.')
             ->salutation('Regards, ' . config('app.name'));
     }

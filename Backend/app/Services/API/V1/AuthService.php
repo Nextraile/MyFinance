@@ -9,11 +9,14 @@ use App\Notifications\API\V1\User\Auth\Verified\CredentialsChangesNotification;
 use App\Notifications\API\V1\User\Auth\Verified\NewDeviceLoginDetectedNotification;
 use App\Notifications\API\V1\User\Auth\Verified\VerifiedEmailChangedNotification;
 use Carbon\Carbon;
+use Illuminate\Support\Carbon as SupportCarbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
-use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
+use Illuminate\Support\Str;
 
 class AuthService
 {
@@ -26,6 +29,27 @@ class AuthService
     public function makePasswordResetToken(User $user): string
     {
         return Password::broker()->createToken($user);
+    }
+
+    public function encryptPasswordResetToken(string $email, string $token): string
+    {
+        return Crypt::encrypt("$email|$token");
+    }
+
+    public function decryptPasswordResetToken(string $encryptedData): array
+    {
+        try {
+
+            $decrypted = Crypt::decrypt($encryptedData);
+
+        } catch (\Exception $e) {
+            return [];
+        }
+
+        $keys = ['email', 'token'];
+        $values = explode('|', $decrypted);
+
+        return array_combine($keys, $values);
     }
 
     public function isPasswordResetTokenValid(string $email, string $token): bool
@@ -50,6 +74,36 @@ class AuthService
                 'password' => Hash::make($password)
             ])->save();
         });
+    }
+
+    // Cache Management
+    public function encryptAndCacheData(string $keyType, mixed $value, int $minutes): string
+    {
+        $id = Str::uuid();
+        $key = "{$keyType}_{$id}";
+        $value = Crypt::encrypt($value);
+
+        Cache::put($key, $value, now()->addMinutes($minutes));
+
+        return $id;
+    }
+
+    public function retrieveEncryptedCachedData(string $keyType, string $key): mixed
+    {
+        $cacheKey = "{$keyType}_{$key}";
+        $encryptedValue = Cache::pull($cacheKey);
+
+        if (!$encryptedValue) {
+            return null;
+        }
+
+        try {
+
+            return Crypt::decrypt($encryptedValue);
+
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     // Device Management
@@ -83,10 +137,6 @@ class AuthService
     {
         $devices = collect($user->known_devices);
 
-        if ($devices->isEmpty()) {
-            throw new UnprocessableEntityHttpException('No known devices found.');
-        }
-
         $devices = $devices->map(function ($device) use ($deviceHash) {
             if ($device['hash'] === $deviceHash) {
                 $device['last_used_at'] = now();
@@ -116,24 +166,28 @@ class AuthService
     }
 
     // Notifications
-    public function sendNewDeviceLoginDetectedNotification(User $user, string $deviceHash): void
+    public function sendNewDeviceLoginDetectedNotification(User $user, string $key, ?int $expiresInMinutes = null): void
     {
-        $user->notify(new NewDeviceLoginDetectedNotification($deviceHash));
+        $expiresInMinutes = $expiresInMinutes ?? config('auth.new_device_login.expire');
+        $user->notify(new NewDeviceLoginDetectedNotification($key, $expiresInMinutes));
     }
 
-    public function sendResetPasswordNotification(User $user, string $token): void
+    public function sendResetPasswordNotification(string $email, string $token, ?int $expiresInMinutes = null): void
     {
-        $user->notify(new ResetPasswordNotification($token));
+        $expiresInMinutes = $expiresInMinutes ?? config('auth.passwords.users.expire');
+        Notification::route('mail', $email)->notify(new ResetPasswordNotification($token, $expiresInMinutes));
     }
 
-    public function sendVerificationEmailNotification(User $user): void
+    public function sendVerificationEmailNotification(User $user, string $key, ?int $expiresInMinutes = null): void
     {
-        $user->notify(new VerificationEmailNotification());
+        $expiresInMinutes = $expiresInMinutes ?? config('auth.verification.expire');
+        $user->notify(new VerificationEmailNotification($key, $expiresInMinutes));
     }
 
-    public function sendVerifiedEmailChangedNotification(User $user, string $newEmail): void
+    public function sendVerifiedEmailChangedNotification(User $user, string $key, ?int $expiresInMinutes = null): void
     {
-        $user->notify(new VerifiedEmailChangedNotification($newEmail));
+        $expiresInMinutes = $expiresInMinutes ?? config('auth.verification.expire');
+        $user->notify(new VerifiedEmailChangedNotification($key, $expiresInMinutes));
     }
 
     public function sendCredentialsChangesNotification(string $email, string $fields): void

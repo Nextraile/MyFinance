@@ -16,9 +16,10 @@ class ResetPasswordNotification extends Notification implements ShouldQueue
     /**
      * Create a new notification instance.
      */
-    public function __construct(public string $token)
+    public function __construct(public string $credentials, public int $expiresInMinutes)
     {
-        $this->token = $token;
+        $this->credentials = $credentials;
+        $this->expiresInMinutes = $expiresInMinutes;
     }
 
     /**
@@ -36,19 +37,19 @@ class ResetPasswordNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $data = ['token' => $this->token, 'email' => $notifiable->getEmailForPasswordReset()];
-        $expires = now()->addMinutes(config('auth.passwords.users.expire'))->getTimestamp();
-        $backendUrl = URL::temporarySignedRoute('api.v1.auth.password-resets.update', $expires, $data);
+        $credentials = $this->credentials;
+        $expires = now()->addMinutes($this->expiresInMinutes)->getTimestamp();
+        $backendUrl = URL::temporarySignedRoute('api.v1.auth.password-resets.update', $expires, $credentials);
         $queryParams = Str::after($backendUrl, '?');
 
-        $frontendUrl = config('app.frontend_url') . "/password-resets/{$data['email']}/{$data['token']}?{$queryParams}";
-        
+        $frontendUrl = config('app.frontend_url') . "/password-resets/{$credentials}?{$queryParams}";
+
         return (new MailMessage)
             ->subject('Reset Your Password - ' . config('app.name'))
             ->greeting('Hello!')
             ->line('You are receiving this email because we received a password reset request for your account.')
             ->action('Reset Password', $frontendUrl)
-            ->line('This password reset link will expire in ' . config('auth.passwords.users.expire') . ' minutes.')
+            ->line('This password reset link will expire in ' . $this->expiresInMinutes . ' minutes.')
             ->line('If you did not request a password reset, no further action is required.')
             ->salutation('Regards, ' . config('app.name'));
     }

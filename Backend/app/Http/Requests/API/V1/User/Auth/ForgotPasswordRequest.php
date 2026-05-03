@@ -6,7 +6,7 @@ use App\Models\User;
 
 class ForgotPasswordRequest extends BaseRequest
 {
-    public User $user;
+    public ?User $user = null;
 
     /**
      * Determine if the user is authorized to make this request.
@@ -24,7 +24,7 @@ class ForgotPasswordRequest extends BaseRequest
     public function rules(): array
     {
         return [
-            'email' => 'required|email|exists:users,email',
+            'email' => 'required|email',
         ];
     }
 

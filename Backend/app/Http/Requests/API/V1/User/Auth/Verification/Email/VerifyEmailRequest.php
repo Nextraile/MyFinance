@@ -3,6 +3,7 @@
 namespace App\Http\Requests\API\V1\User\Auth\Verification\Email;
 
 use App\Models\User;
+use App\Services\API\V1\AuthService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Http\FormRequest;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
@@ -10,6 +11,7 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 class VerifyEmailRequest extends FormRequest
 {
     public User $user;
+    public string $currentDeviceHash;
 
     /**
      * Determine if the user is authorized to make this request.
@@ -27,41 +29,40 @@ class VerifyEmailRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => 'required|integer',
-            'hash' => 'required|string',
+            'key' => 'required|string',
         ];
     }
 
     public function prepareForValidation()
     {
-        if ($this->route('id') && $this->route('hash')) {
+        if ($this->route('key')) {
             $this->merge([
-                'id' => $this->route('id'),
-                'hash' => $this->route('hash'),
+                'key' => $this->route('key')
             ]);
         } else {
-            throw new UnprocessableEntityHttpException('Invalid credentials.');
+            abort(422, 'Invalid credentials.');
         }
     }
 
     public function passedValidation()
     {
-        try{
+        $key = $this->safe()->key;
+        $userId = AuthService::make()->retrieveEncryptedCachedData("email_verification", $key);
 
-            $user = User::findOrFail($this->id);
-            
-        } catch (ModelNotFoundException $e) {
-            throw new UnprocessableEntityHttpException('Invalid credentials.');
+        if (empty($userId)) {
+            abort(422, 'Invalid credentials.');
+        }
+        
+        $this->user = User::where('id', $userId)->first();
+
+        if (!$this->user) {
+            abort(404, 'User not found.');
         }
 
-        if (!hash_equals((string) $this->hash, sha1($user->getEmailForVerification()))) {
-            throw new UnprocessableEntityHttpException('Invalid credentials');
+        if ($this->user->hasVerifiedEmail()) {
+            abort(422, 'Email is already verified.');
         }
 
-        if ($user->hasVerifiedEmail()) {
-            throw new UnprocessableEntityHttpException('Email is already verified.');
-        }
-
-        $this->user = $user;
+        $this->currentDeviceHash = AuthService::make()->hashDevice($this->user->id, $this->header('User-Agent'));
     }
 }
