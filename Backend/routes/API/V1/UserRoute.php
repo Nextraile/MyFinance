@@ -11,7 +11,6 @@ Route::controller(UserController::class)->group(function () {
     Route::prefix('auth')->name('auth.')->group(function () {
         Route::prefix('tokens')->group(function () {
             Route::post('/', 'login')->name('login');
-            // Route::get('new-device/{email}/{hash}', 'login')->middleware('signed')->name('login.new-device');
             Route::get('new-device/{key}', 'login')->middleware('signed')->name('login.new-device');
         });
         
@@ -27,9 +26,7 @@ Route::controller(UserController::class)->group(function () {
         Route::prefix('email')->name('email.')->group(function () {
             Route::middleware('auth:sanctum')->group(function () {
                 Route::post('send', 'sendVerificationEmail')->name('send');
-                // Route::post('resend', 'sendVerificationEmail')->name('resend');
             });
-            // Route::get('verify/{id}/{hash}', 'verifyEmail')->middleware('signed')->name('verify');
             Route::get('verify/{key}', 'verifyEmail')->middleware('signed')->name('verify');
         });
     });
@@ -38,7 +35,6 @@ Route::controller(UserController::class)->group(function () {
     Route::prefix('users/profile')->name('users.')->middleware('auth:sanctum')->group(function () {
         Route::get('/', 'show')->name('show');
         Route::patch('/', 'update')->name('update');
-        // Route::get('/verify-new-email/{id}/{hash}', 'update')->withoutMiddleware('auth:sanctum')->middleware('signed')->name('update.verify.new-email'); // For email change verification
         Route::get('/verify-new-email/{key}', 'update')->withoutMiddleware('auth:sanctum')->middleware('signed')->name('update.verify.new-email'); // For email change verification
         Route::delete('/', 'destroy')->name('destroy');
     });
