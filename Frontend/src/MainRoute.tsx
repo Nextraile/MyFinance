@@ -19,8 +19,8 @@ import newLocation from "./routes/NewLocationRoute";
 import frequentlyAskedQuestions from "./routes/FAQRoute";
 import privacyPolicy from "./routes/PrivacyPolicyRoute";
 import termsOfService from "./routes/TermsOfServiceRoute";
-import verifyEmail from "./routes/verifyEmailRoute";
-import verifyNewEmail from "./routes/verifyNewEmailRoute";
+import verifyNewEmail from "./routes/VerifyNewEmailRoute";
+import verifyEmail from "./routes/VerifyEmailRoute";
 
 const routes = createBrowserRouter([
     {path: "/app", element: <MainPage />, id: "main", loader: appLoader, children: [
