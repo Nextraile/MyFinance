@@ -38,7 +38,7 @@ class NewDeviceLoginDetectedNotification extends Notification implements ShouldQ
     public function toMail(object $notifiable): MailMessage
     {
         $data = $this->key;
-        $expires = now()->addMinutes($this->expiresInMinutes)->getTimestamp();
+        $expires = now()->addMinutes($this->expiresInMinutes);
         $backendUrl = URL::temporarySignedRoute('api.v1.auth.login.new-device', $expires, $data);
         $queryParams = Str::after($backendUrl, '?');
         

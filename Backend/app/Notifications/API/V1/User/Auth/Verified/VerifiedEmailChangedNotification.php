@@ -38,7 +38,7 @@ class VerifiedEmailChangedNotification extends Notification implements ShouldQue
     public function toMail(object $notifiable): MailMessage
     {
         $data = $this->key;
-        $expires = now()->addMinutes($this->expiresInMinutes)->getTimestamp();
+        $expires = now()->addMinutes($this->expiresInMinutes);
         $backendUrl = URL::temporarySignedRoute('api.v1.users.update.verify.new-email', $expires, $data);
         $queryParams = Str::after($backendUrl, '?');
 

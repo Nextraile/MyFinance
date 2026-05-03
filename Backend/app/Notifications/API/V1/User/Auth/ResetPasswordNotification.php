@@ -38,7 +38,7 @@ class ResetPasswordNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         $credentials = $this->credentials;
-        $expires = now()->addMinutes($this->expiresInMinutes)->getTimestamp();
+        $expires = now()->addMinutes($this->expiresInMinutes);
         $backendUrl = URL::temporarySignedRoute('api.v1.auth.password-resets.update', $expires, $credentials);
         $queryParams = Str::after($backendUrl, '?');
 

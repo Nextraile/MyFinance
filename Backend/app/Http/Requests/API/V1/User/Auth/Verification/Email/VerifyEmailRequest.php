@@ -4,9 +4,7 @@ namespace App\Http\Requests\API\V1\User\Auth\Verification\Email;
 
 use App\Models\User;
 use App\Services\API\V1\AuthService;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Http\FormRequest;
-use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class VerifyEmailRequest extends FormRequest
 {
