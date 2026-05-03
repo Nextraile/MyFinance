@@ -37,7 +37,7 @@ class VerificationEmailNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $data = $this->key;
+        $data = ['key' => $this->key];
         $expires = now()->addMinutes($this->expiresInMinutes);
         $backendUrl = URL::temporarySignedRoute('api.v1.auth.email.verify', $expires, $data);
         $queryParams = Str::after($backendUrl, '?');
