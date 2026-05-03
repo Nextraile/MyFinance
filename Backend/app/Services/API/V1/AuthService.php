@@ -9,7 +9,6 @@ use App\Notifications\API\V1\User\Auth\Verified\CredentialsChangesNotification;
 use App\Notifications\API\V1\User\Auth\Verified\NewDeviceLoginDetectedNotification;
 use App\Notifications\API\V1\User\Auth\Verified\VerifiedEmailChangedNotification;
 use Carbon\Carbon;
-use Illuminate\Support\Carbon as SupportCarbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
@@ -33,7 +32,8 @@ class AuthService
 
     public function encryptPasswordResetToken(string $email, string $token): string
     {
-        return Crypt::encrypt("$email|$token");
+        $data = ['email' => $email, 'token' => $token];
+        return Crypt::encrypt($data);
     }
 
     public function decryptPasswordResetToken(string $encryptedData): array
@@ -46,10 +46,7 @@ class AuthService
             return [];
         }
 
-        $keys = ['email', 'token'];
-        $values = explode('|', $decrypted);
-
-        return array_combine($keys, $values);
+        return $decrypted;
     }
 
     public function isPasswordResetTokenValid(string $email, string $token): bool
@@ -79,7 +76,7 @@ class AuthService
     // Cache Management
     public function encryptAndCacheData(string $keyType, mixed $value, int $minutes): string
     {
-        $id = Str::uuid();
+        $id = (string) Str::uuid();
         $key = "{$keyType}_{$id}";
         $value = Crypt::encrypt($value);
 
@@ -172,10 +169,10 @@ class AuthService
         $user->notify(new NewDeviceLoginDetectedNotification($key, $expiresInMinutes));
     }
 
-    public function sendResetPasswordNotification(string $email, string $token, ?int $expiresInMinutes = null): void
+    public function sendResetPasswordNotification(string $email, string $credentials, ?int $expiresInMinutes = null): void
     {
         $expiresInMinutes = $expiresInMinutes ?? config('auth.passwords.users.expire');
-        Notification::route('mail', $email)->notify(new ResetPasswordNotification($token, $expiresInMinutes));
+        Notification::route('mail', $email)->notify(new ResetPasswordNotification($credentials, $expiresInMinutes));
     }
 
     public function sendVerificationEmailNotification(User $user, string $key, ?int $expiresInMinutes = null): void
