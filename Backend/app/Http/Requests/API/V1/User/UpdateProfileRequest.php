@@ -46,8 +46,8 @@ class UpdateProfileRequest extends FormRequest
                 'string',
                 'email',
                 'max:255',
-                Rule::unique('users', 'email')->ignore($this->user()->id)
-                ->where(fn($query) => $query->where('email', $this->email)->orWhere('pending_email', $this->email)),
+                Rule::unique('users', 'email')->ignore($this->user()->id),
+                Rule::unique('users', 'pending_email')->ignore($this->user()->id),
             ],
             'old_password' => 'sometimes|required_with:new_password|current_password',
             'new_password' => [
