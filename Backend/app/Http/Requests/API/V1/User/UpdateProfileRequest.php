@@ -8,6 +8,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\Rule;
+use Override;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class UpdateProfileRequest extends FormRequest
@@ -58,6 +59,13 @@ class UpdateProfileRequest extends FormRequest
                     ->numbers()
                     ->symbols()
             ],
+        ];
+    }
+
+    public function messages()
+    {
+        return [
+            'email.unique' => 'Invalid email address.',
         ];
     }
 
