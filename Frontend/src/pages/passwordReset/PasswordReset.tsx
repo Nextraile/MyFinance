@@ -17,7 +17,7 @@ import { ApiUrl } from "@/lib/variable";
 import axios from "axios";
 
 export function PasswordReset(): JSX.Element {
-    const { email, token } = useParams<{ email: string; token: string }>();
+    const { token } = useParams<{ token: string }>();
     const { search } = useLocation()
     const [isOut, setIsOut] = useState<boolean>(false);
     const [status, setStatus] = useState<"none" | "checking" | "expired" | "ok">("none")
@@ -46,11 +46,11 @@ export function PasswordReset(): JSX.Element {
         }
     })
 
-    if (!email || !token || !search || search == "") window.location.href = "/"
+    if (!token || !search || search == "") window.location.href = "/"
 
     const checkValidityAndSetStatus = async () => {
         try {
-            await axios.get(`${ApiUrl}/auth/password-resets/${email}/${token + search}`);
+            await axios.get(`${ApiUrl}/auth/password-resets/${token + search}`);
             setStatus("ok")
         } catch (err) {
             setStatus("expired")
@@ -63,7 +63,7 @@ export function PasswordReset(): JSX.Element {
 
         try {
             // TODO: Call API to reset password with email, token, and password
-            await axios.put(`${ApiUrl}/auth/password-resets/${email}/${token + search}`, {
+            await axios.put(`${ApiUrl}/auth/password-resets/${token + search}`, {
                 password: values.password,
                 password_confirmation: values.confirmPassword
             })
@@ -80,7 +80,6 @@ export function PasswordReset(): JSX.Element {
     };
 
     useEffect(() => {
-        console.log("Email:", email)
         console.log("Token:", token)
         console.log("search :", search)
 

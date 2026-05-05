@@ -1,7 +1,9 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Spinner } from "@/components/ui/spinner";
+import { ApiUrl } from "@/lib/variable";
 import { faPencil } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import axios, { isAxiosError } from "axios";
 import { AlertCircleIcon } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState, type JSX } from "react";
@@ -9,30 +11,43 @@ import { useLocation, useParams } from "react-router-dom";
 import { boolean } from "zod";
 
 export function NewLocation(): JSX.Element {
-    const { email, token } = useParams<{ email: string; token: string }>();
+    const { token } = useParams<{token: string }>();
     const { search } = useLocation()
     const [isOut, setIsOut] = useState<boolean>(false)
     const [ isLoading, setIsLoading ] = useState<boolean>(false)
     const [ status, setStatus ] = useState<"none" | "error" | "ok">("none")
     const [ errorMsg, setErrorMsg ] = useState<string>("")
 
-    if (!email || !token || !search || search == "") window.location.href = "/"
+    if (!token || !search || search == "") window.location.href = "/"
 
     useEffect(() => {
-        console.log("email :", email)
         console.log("token :", token)
         console.log("search :", search)
     }, [])
 
-    const allowLoginHandler = () => {
+    const allowLoginHandler = async () => {
         setIsLoading(true)
         setStatus("none")
         setErrorMsg("")
 
-        setTimeout(() => {
-            setIsLoading(false)
+        try {
+            await axios.get(`${ApiUrl}/auth/tokens/new-device/${token+search}`)
             setStatus("ok")
-        }, 4500)
+        } catch (err) {
+            console.log(err)
+
+            if (isAxiosError(err)) {
+                setStatus("error")
+                if (err.status == 403) {
+                    setErrorMsg("Token is expired.")
+                } else {
+                    setErrorMsg("Internal server error.")
+                }
+            }
+
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     return (
@@ -60,7 +75,7 @@ export function NewLocation(): JSX.Element {
                     <div className="flex flex-col items-center gap-3 -mt-5 px-5">
                         <FontAwesomeIcon icon={faPencil} className="text-6xl text-stone-900"></FontAwesomeIcon>
                         <h1 className="text-2xl font-bold text-stone-900 dark:text-background-primary">Device Login Request</h1>
-                        <p className="text-base text-stone-600 dark:text-stone-400 text-center mb-3">We receive a new device login request to {email}. <br/> If this isn't you, change your password immediately.</p>
+                        <p className="text-base text-stone-600 dark:text-stone-400 text-center mb-3">We receive a new device login request. <br/> If this isn't you, change your password immediately.</p>
 
                         <AnimatePresence mode="wait">            
                             { status == "error" &&

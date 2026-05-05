@@ -1,7 +1,7 @@
 import { NewLocation } from "@/pages/newLocation/NewLocation"
 
 const newLocation = {
-    path: "new-location/:email/:token",
+    path: "new-location/:token",
     element: <NewLocation />
 }
 

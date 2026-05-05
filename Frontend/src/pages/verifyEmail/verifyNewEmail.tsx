@@ -10,7 +10,7 @@ import { useEffect, useState, type JSX } from "react";
 import { useLocation, useParams } from "react-router-dom";
 
 export function VerifyNewEmail(): JSX.Element {
-    const { email, token } = useParams<{ email: string; token: string }>();
+    const { token } = useParams<{ token: string }>();
     const { search } = useLocation()
 
     const [isOut, setIsOut] = useState<boolean>(false)
@@ -18,7 +18,7 @@ export function VerifyNewEmail(): JSX.Element {
     const [ errorMsg, setErrorMsg ] = useState<string>("")
     const [ redirectTime, setRedirectTime ] = useState<number>(5)
 
-    if (!email || !token || !search || search == "") window.location.href = "/"
+    if (!token || !search || search == "") window.location.href = "/"
 
     useEffect(() => {        
         if (status == "ok") {
@@ -43,17 +43,16 @@ export function VerifyNewEmail(): JSX.Element {
         setErrorMsg("")
         
         try {
-            await axios.get(`${ApiUrl}/users/profile/verify-new-email/${email}/${token + search}`)
+            await axios.get(`${ApiUrl}/users/profile/verify-new-email/${token+search}`)
 
             setStatus("ok")
         } catch (error) {
             if(isAxiosError(error)) {
+                setStatus("error")
                 if (error.status == 422) {
                     setErrorMsg("Token is expired.")
-                    setStatus("error")
                 } else {
                     setErrorMsg("Internal server error.")
-                    setStatus("error")
                 }
             }
         }

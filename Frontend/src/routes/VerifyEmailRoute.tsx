@@ -1,7 +1,7 @@
 import { VerifyEmail } from "@/pages/verifyEmail/VerifyEmail";
 
 const verifyEmail = {
-    path: "verify-email/:email/:token",
+    path: "verify-email/:token",
     element: <VerifyEmail />
 }
 
