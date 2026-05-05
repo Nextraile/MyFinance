@@ -41,14 +41,7 @@ class UpdateProfileRequest extends FormRequest
         return [
             'avatar' => $this->hasFile('avatar') ? 'sometimes|image|mimes:jpeg,png,jpg,webp|max:2048' : 'sometimes|string|max:4', // 2 MB
             'name' => 'sometimes|string|min:3|max:50',
-            'email' => [
-                'sometimes',
-                'string',
-                'email',
-                'max:255',
-                Rule::unique('users', 'email')->ignore($this->user()->id),
-                Rule::unique('users', 'pending_email')->ignore($this->user()->id),
-            ],
+            'email' => "sometimes|string|email|max:255|unique:users,email,{$this->user()->id}|unique:users,pending_email,{$this->user()->id}",
             'old_password' => 'sometimes|required_with:new_password|current_password',
             'new_password' => [
                 'sometimes',
