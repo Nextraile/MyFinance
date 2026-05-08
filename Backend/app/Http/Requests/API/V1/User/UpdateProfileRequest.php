@@ -7,8 +7,6 @@ use App\Services\API\V1\AuthService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
-use Illuminate\Validation\Rule;
-use Override;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class UpdateProfileRequest extends FormRequest

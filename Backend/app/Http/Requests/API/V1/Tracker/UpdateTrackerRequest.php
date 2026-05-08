@@ -3,6 +3,7 @@
 namespace App\Http\Requests\API\V1\Tracker;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Contracts\Validation\ValidationRule;
 
 class UpdateTrackerRequest extends FormRequest
 {

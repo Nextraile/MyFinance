@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\API\V1\Tracker;
 
+use App\Models\Tracker;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class IndexTrackersRequest extends FormRequest
@@ -11,7 +13,7 @@ class IndexTrackersRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('viewAny');
+        return $this->user()->can('viewAny', Tracker::class);
     }
 
     /**
@@ -31,8 +33,7 @@ class IndexTrackersRequest extends FormRequest
             'filter' => 'sometimes|array',
             'filter.name' => 'sometimes|string|max:255',
             'filter.description' => 'sometimes|string|max:255',
-            'sort' => 'sometimes|array',
-            'sort.*' => 'sometimes|string',
+            'sort' => 'sometimes|string',
         ];
     }
 

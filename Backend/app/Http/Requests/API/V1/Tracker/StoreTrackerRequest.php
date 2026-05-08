@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\API\V1\Tracker;
 
+use App\Models\Tracker;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreTrackerRequest extends FormRequest
@@ -11,7 +13,7 @@ class StoreTrackerRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('create');
+        return $this->user()->can('create', Tracker::class);
     }
 
     /**

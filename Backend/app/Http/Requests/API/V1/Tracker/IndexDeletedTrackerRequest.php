@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\API\V1\Tracker;
 
+use App\Models\Tracker;
 use Illuminate\Contracts\Validation\ValidationRule;
 
 class IndexDeletedTrackerRequest extends IndexTrackersRequest
@@ -11,7 +12,7 @@ class IndexDeletedTrackerRequest extends IndexTrackersRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('viewAnyDeleted');
+        return $this->user()->can('viewAnyDeleted', Tracker::class);
     }
 
     /**
