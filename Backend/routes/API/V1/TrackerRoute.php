@@ -13,7 +13,7 @@ Route::controller(TrackerController::class)->middleware('auth:sanctum')->group(f
         Route::prefix('/{tracker}')->group(function () {
             Route::get('/', 'showDeleted')->withTrashed()->name('.show');
             Route::patch('/restore', 'restore')->withTrashed()->name('.restore');
-            Route::delete('/force', 'forceDelete')->withTrashed()->name('.forceDelete');
+            Route::delete('/force', 'forceDelete')->withTrashed()->name('.force');
         });
     });
     
