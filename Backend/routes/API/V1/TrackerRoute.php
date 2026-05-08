@@ -16,4 +16,5 @@ Route::controller(TrackerController::class)->middleware('auth:sanctum')->group(f
             Route::delete('/force', 'forceDelete')->withTrashed()->name('.forceDelete');
         });
     });
+    
 });

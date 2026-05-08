@@ -76,7 +76,7 @@ class TrackerController extends Controller
                 'transactions.id','transactions.amount', 'transactions.type'
             )
             ->allowedFilters('name', 'description')
-            ->allowedSorts('name', 'created_at', 'updated_at')
+            ->allowedSorts('name', 'created_at', 'updated_at', 'deleted_at')
             ->defaultSort('-deleted_at')
             ->paginate($trackerSize);
 
