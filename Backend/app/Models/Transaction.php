@@ -21,7 +21,7 @@ class Transaction extends Model
         'amount',
         'description',
         'files',
-        'transaction_date',
+        'date',
     ];
 
     protected function casts(): array
@@ -29,7 +29,7 @@ class Transaction extends Model
         return [
             'amount' => 'decimal:2',
             'files' => 'collection',
-            'transaction_date' => 'datetime',
+            'date' => 'datetime',
         ];
     }
 
@@ -45,17 +45,17 @@ class Transaction extends Model
 
     public function scopeStartsBefore(Builder $query, $date)
     {
-        return $query->where('transaction_date', '<=',Carbon::parse($date));
+        return $query->where('date', '<=',Carbon::parse($date));
     }
 
     public function scopeInBetween(Builder $query, $startDate, $endDate)
     {
-        return $query->whereBetween('transaction_date', [Carbon::parse($startDate), Carbon::parse($endDate)]);
+        return $query->whereBetween('date', [Carbon::parse($startDate), Carbon::parse($endDate)]);
     }
 
     public function scopeEndsAfter(Builder $query, $date)
     {
-        return $query->where('transaction_date', '>=', Carbon::parse($date));
+        return $query->where('date', '>=', Carbon::parse($date));
     }
 
     public function getFileUrlAttribute()
