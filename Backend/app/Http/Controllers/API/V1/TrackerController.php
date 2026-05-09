@@ -146,37 +146,14 @@ class TrackerController extends Controller
                     $tracker->transactions()->delete();
                 }
             });
-
-            return ApiResponseHelper::successResponse(
-                message: 'Tracker deleted successfully.',
-            );
             
         } catch (\Throwable $e) {
             throw $e;
         }
-    }
 
-    public function forceDelete(Request $request, Tracker $tracker)
-    {
-        Gate::authorize('forceDelete', $tracker);
-
-        try {
-
-            DB::transaction(function () use ($tracker) {
-                $tracker->forceDelete();
-
-                if ($tracker->transactions()->onlyTrashed()->exists()) {
-                    $tracker->transactions()->onlyTrashed()->forceDelete();
-                }
-            });
-
-            return ApiResponseHelper::successResponse(
-                message: 'Tracker permanently deleted successfully.',
-            );
-            
-        } catch (\Throwable $e) {
-            throw $e;
-        }
+        return ApiResponseHelper::successResponse(
+            message: 'Tracker deleted successfully.',
+        );
     }
 
     public function restore(Request $request, Tracker $tracker)
@@ -193,12 +170,35 @@ class TrackerController extends Controller
                 }
             });
 
-            return ApiResponseHelper::successResponse(
-                message: 'Tracker restored successfully.',
-            );
-
         } catch (\Throwable $e) {
             throw $e;
         }
+
+        return ApiResponseHelper::successResponse(
+            message: 'Tracker restored successfully.',
+        );
+    }
+
+    public function forceDelete(Request $request, Tracker $tracker)
+    {
+        Gate::authorize('forceDelete', $tracker);
+
+        try {
+
+            DB::transaction(function () use ($tracker) {
+                $tracker->forceDelete();
+
+                if ($tracker->transactions()->onlyTrashed()->exists()) {
+                    $tracker->transactions()->onlyTrashed()->forceDelete();
+                }
+            });
+            
+        } catch (\Throwable $e) {
+            throw $e;
+        }
+
+        return ApiResponseHelper::successResponse(
+            message: 'Tracker permanently deleted successfully.',
+        );
     }
 }
