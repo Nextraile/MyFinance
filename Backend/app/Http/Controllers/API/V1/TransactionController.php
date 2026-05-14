@@ -12,6 +12,7 @@ use App\Http\Requests\API\V1\Transaction\UpdateTransactionRequest;
 use App\Http\Resources\API\V1\TransactionResource;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\AllowedInclude;
 use Spatie\QueryBuilder\Enums\FilterOperator;
@@ -162,6 +163,8 @@ class TransactionController extends Controller
      */
     public function delete(Request $request, Transaction $transaction)
     {
+        Gate::authorize('delete', $transaction);
+
         $transaction->delete();
 
         return ApiResponseHelper::successResponse(
@@ -171,6 +174,8 @@ class TransactionController extends Controller
 
     public function restore(Request $request, Transaction $transaction)
     {
+        Gate::authorize('restore', $transaction);
+
         $transaction->restore();
 
         return ApiResponseHelper::successResponse(
@@ -181,6 +186,8 @@ class TransactionController extends Controller
 
     public function forceDelete(Request $request, Transaction $transaction)
     {
+        Gate::authorize('forceDelete', $transaction);
+        
         $transaction->forceDelete();
 
         return ApiResponseHelper::successResponse(
