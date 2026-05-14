@@ -11,7 +11,6 @@ use App\Http\Requests\API\V1\Transaction\StoreTransactionRequest;
 use App\Http\Requests\API\V1\Transaction\UpdateTransactionRequest;
 use App\Http\Resources\API\V1\TransactionResource;
 use App\Models\Transaction;
-use App\Services\API\V1\TransactionService;
 use Illuminate\Http\Request;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\AllowedInclude;
