@@ -76,9 +76,9 @@ class TransactionController extends Controller
                 'description',
                 AllowedFilter::exact('type'),
                 AllowedFilter::operator('amount', FilterOperator::DYNAMIC),
-                AllowedFilter::scope('starts_before'),
-                AllowedFilter::scope('in_between'),
-                AllowedFilter::scope('ends_after'),
+                AllowedFilter::scope('starts_before', 'dynamicDateFilter')->default('before'),
+                AllowedFilter::scope('in_between', 'dynamicDateFilter')->default('between'),
+                AllowedFilter::scope('ends_after', 'dynamicDateFilter')->default('after'),
                 AllowedFilter::exact('tracker.id'),
             )
             ->allowedSorts('name', 'amount', 'date', 'created_at', 'updated_at', 'deleted_at')
