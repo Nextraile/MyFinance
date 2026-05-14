@@ -43,7 +43,7 @@ class StoreTransactionRequest extends FormRequest
     protected function prepareForValidation()
     {
         $this->merge([
-            'date' => $this->input('date', now())->toDateTimeString(),
+            'date' => $this->input('date', now()->toDateTimeString()),
             'user_id' => $this->user()->id,
             'tracker_id' => $this->route('tracker')->id,
         ]);

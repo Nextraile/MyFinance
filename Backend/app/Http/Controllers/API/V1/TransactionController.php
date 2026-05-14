@@ -10,6 +10,7 @@ use App\Http\Requests\API\V1\Transaction\ShowTransactionRequest;
 use App\Http\Requests\API\V1\Transaction\StoreTransactionRequest;
 use App\Http\Requests\API\V1\Transaction\UpdateTransactionRequest;
 use App\Http\Resources\API\V1\TransactionResource;
+use App\Models\Tracker;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -23,10 +24,10 @@ class TransactionController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(IndexTransactionsRequest $request)
+    public function index(IndexTransactionsRequest $request, Tracker $tracker)
     {
         $validated = $request->validated();
-        $trackerId = $validated['tracker_id'];
+        $trackerId = $tracker->id;
         $size = $validated['size'];
 
         $transactions = QueryBuilder::for(Transaction::class)
@@ -96,7 +97,7 @@ class TransactionController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreTransactionRequest $request)
+    public function store(StoreTransactionRequest $request, Tracker $tracker)
     {
         $validated = $request->validated();
 

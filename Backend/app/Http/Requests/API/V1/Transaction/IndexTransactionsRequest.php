@@ -52,7 +52,6 @@ class IndexTransactionsRequest extends FormRequest
     public function prepareForValidation()
     {
         $this->merge([
-            'tracker_id' => $this->route('tracker')->id,
             'size' => $this->input('size', 10),
             'page' => $this->input('page', 1),
         ]);
