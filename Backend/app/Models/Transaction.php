@@ -40,18 +40,34 @@ class Transaction extends Model
         return $this->belongsTo(Tracker::class);
     }
 
-    public function scopeStartsBefore(Builder $query, string $column, $date)
+    public function scopeDynamicDateFilter(Builder $query, string $value, string $type)
     {
-        return $query->where($column, '<=', Carbon::parse($date));
-    }
+        $whitelistColumns = ['date', 'created_at', 'updated_at'];
+        $params = explode(',', $value);
+        $column = $params[0];
+        $date1 = $params[1] ?? null;
+        $date2 = $params[2] ?? null;
+        $operator =
+            $type === 'between' ? '>=' : (
+                $type === 'before' ? '<=' : (
+                    $type === 'after' ? '>=' : null
+                )
+            );
 
-    public function scopeInBetween(Builder $query, string $column, $startDate, $endDate)
-    {
-        return $query->whereBetween($column, [Carbon::parse($startDate), Carbon::parse($endDate)]);
-    }
+        if (!in_array($column, $whitelistColumns) || is_null($operator)) return $query;
 
-    public function scopeEndsAfter(Builder $query, string $column, $date)
-    {
-        return $query->where($column, '>=', Carbon::parse($date));
+        try {
+            $date1 = Carbon::parse($date1);
+
+            if ($type === 'between') {
+                $date2 = Carbon::parse($date2);
+                return $query->whereBetween($column, [$date1, $date2]);
+            }
+            return $query->where($column, $operator, $date1);
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Dynamic Date Filter Error: " . $e->getMessage());
+            return $query;
+        }
     }
 }
