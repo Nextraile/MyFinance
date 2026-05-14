@@ -13,19 +13,13 @@ use App\Http\Resources\API\V1\TransactionResource;
 use App\Models\Transaction;
 use App\Services\API\V1\TransactionService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\AllowedInclude;
 use Spatie\QueryBuilder\Enums\FilterOperator;
 use Spatie\QueryBuilder\QueryBuilder;
 
 class TransactionController extends Controller
-{
-    public function __construct(protected TransactionService $transactionService)
-    {
-        $this->transactionService = $transactionService;
-    }
-    
+{   
     /**
      * Display a listing of the resource.
      */
@@ -64,12 +58,10 @@ class TransactionController extends Controller
     public function indexDeleted(IndexDeletedTransactionsRequest $request)
     {
             $validated = $request->validated();
-            $trackerId = $validated['tracker_id'];
             $size = $validated['size'];
     
             $transactions = QueryBuilder::for(Transaction::class)
             ->onlyTrashed()
-            ->where('tracker_id', $trackerId)
             ->allowedIncludes(
                 AllowedInclude::callback(
                     name: 'tracker',
@@ -88,6 +80,7 @@ class TransactionController extends Controller
                 AllowedFilter::scope('starts_before'),
                 AllowedFilter::scope('in_between'),
                 AllowedFilter::scope('ends_after'),
+                AllowedFilter::exact('tracker.id'),
             )
             ->allowedSorts('name', 'amount', 'date', 'created_at', 'updated_at', 'deleted_at')
             ->defaultSort('-deleted_at')
@@ -107,13 +100,6 @@ class TransactionController extends Controller
         $validated = $request->validated();
 
         $transaction = Transaction::create($validated);
-
-        $transaction = QueryBuilder::for(Transaction::class)
-            ->whereKey($transaction->id)
-            ->allowedFields(
-                'id', 'name', 'type', 'amount', 'description', 'date', 'created_at', 'updated_at',
-            )
-            ->firstOrFail();
 
         return ApiResponseHelper::successResponse(
             message: 'Transaction created successfully.',
@@ -146,6 +132,7 @@ class TransactionController extends Controller
             ->whereKey($transaction->id)
             ->allowedFields(
                 'id', 'name', 'type', 'amount', 'description', 'date', 'created_at', 'updated_at', 'deleted_at',
+                'tracker.id', 'tracker.name'
             )
             ->firstOrFail();
 
