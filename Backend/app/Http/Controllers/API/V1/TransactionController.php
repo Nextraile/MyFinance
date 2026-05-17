@@ -62,9 +62,8 @@ class TransactionController extends Controller
             $validated = $request->validated();
             $size = $validated['size'];
     
-            $transactions = QueryBuilder::for(Transaction::class)
+            $transactions = QueryBuilder::for(Transaction::onlyTrashed())
             ->where('user_id', $request->user()->id)
-            ->onlyTrashed()
             ->allowedIncludes(
                 AllowedInclude::callback(
                     name: 'tracker',
@@ -124,8 +123,7 @@ class TransactionController extends Controller
      */
     public function show(ShowTransactionRequest $request, Transaction $transaction)
     {
-        $transaction = QueryBuilder::for(Transaction::class)
-            ->whereKey($transaction->id)
+        $transaction = QueryBuilder::for(Transaction::whereKey($transaction->id))
             ->allowedFields(
                 'id', 'name', 'type', 'amount', 'description', 'date', 'created_at', 'updated_at',
             )
@@ -139,8 +137,7 @@ class TransactionController extends Controller
 
     public function showDeleted(ShowDeletedTransactionRequest $request, Transaction $transaction)
     {
-        $transaction = QueryBuilder::for(Transaction::class)
-            ->onlyTrashed()
+        $transaction = QueryBuilder::for(Transaction::onlyTrashed())
             ->whereKey($transaction->id)
             ->allowedFields(
                 'id', 'name', 'type', 'amount', 'description', 'date', 'created_at', 'updated_at', 'deleted_at',
