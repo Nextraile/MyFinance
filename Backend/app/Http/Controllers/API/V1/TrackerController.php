@@ -152,8 +152,8 @@ class TrackerController extends Controller
                 ),
             )
             ->allowedFilters('name', 'description')
-            ->allowedSorts('name', 'created_at', 'updated_at')
-            ->defaultSort('-updated_at')
+            ->allowedSorts('name', 'created_at', 'updated_at', 'deleted_at')
+            ->defaultSort('-deleted_at')
             ->paginate($trackerSize);
 
         if ($request->input('include') === 'recent_transactions') {
@@ -176,8 +176,8 @@ class TrackerController extends Controller
                     'id' => $id,
                     'attributes' => $attributes->all(),
                     'links' => [
-                        'self' => route('api.v1.transactions.show', $id),
-                        'tracker' => route('api.v1.trackers.show', $transaction['tracker_id'])
+                        'self' => route('api.v1.deleted.transactions.show', $id),
+                        'tracker' => route('api.v1.deleted.trackers.show', $transaction['tracker_id'])
                     ]
                 ];
             })->unique('id')->values()->all();
@@ -263,11 +263,11 @@ class TrackerController extends Controller
         try {
 
             DB::transaction(function () use ($tracker) {
-                $tracker->delete();
-
                 if ($tracker->transactions()->exists()) {
                     $tracker->transactions()->delete();
                 }
+
+                $tracker->delete();
             });
             
         } catch (\Throwable $e) {
@@ -298,7 +298,9 @@ class TrackerController extends Controller
         }
 
         return ApiResponseHelper::successResponse(
-            message: 'Tracker restored successfully.',
+            message: 'Tracker restored successfully. 
+            All associated transactions have also been restored. 
+            You may need to re-delete any transactions that you wish to keep deleted.',
         );
     }
 
@@ -309,11 +311,11 @@ class TrackerController extends Controller
         try {
 
             DB::transaction(function () use ($tracker) {
-                $tracker->forceDelete();
-
                 if ($tracker->transactions()->onlyTrashed()->exists()) {
                     $tracker->transactions()->onlyTrashed()->forceDelete();
                 }
+
+                $tracker->forceDelete();
             });
             
         } catch (\Throwable $e) {

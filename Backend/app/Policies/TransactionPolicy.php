@@ -76,6 +76,10 @@ class TransactionPolicy
      */
     public function restore(User $user, Transaction $transaction): bool|Response
     {
+        if (optional($transaction->tracker)->trashed()) {
+            return Response::deny('Cannot restore transaction because its tracker is deleted.');
+        }
+
         if (!$transaction->trashed()) {
             return Response::deny('Transaction must be deleted first.');
         }

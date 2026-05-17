@@ -30,12 +30,14 @@ class TransactionController extends Controller
         $validated = $request->validated();
         $trackerId = $tracker->id;
         $size = $validated['size'];
+        $isTrackerFieldsFilled = $request->filled('fields.tracker');
+        $isTrackerIncluded = in_array('tracker', explode(',', $request->input('include', '')));
 
-        $transactions = QueryBuilder::for(Transaction::class)
-            ->where('tracker_id', $trackerId)
+        $transactions = QueryBuilder::for(Transaction::where('tracker_id', $trackerId))
+            ->where('user_id', $request->user()->id)
             ->allowedIncludes('tracker')
             ->allowedFields(
-                'id', 'name', 'type', 'amount', 'description', 'date', 'created_at', 'updated_at',
+                'id', 'tracker_id', 'name', 'type', 'amount', 'description', 'date', 'created_at', 'updated_at',
                 'tracker.id', 'tracker.name'
             )
             ->allowedFilters(
@@ -49,6 +51,22 @@ class TransactionController extends Controller
             )
             ->allowedSorts('name', 'amount', 'date', 'created_at', 'updated_at')
             ->defaultSort('-date')
+            ->when($isTrackerFieldsFilled || $isTrackerIncluded, function ($query) use ($request, $isTrackerFieldsFilled, $isTrackerIncluded) {
+                if ($isTrackerFieldsFilled && !$isTrackerIncluded) {
+                    $query->with('tracker');
+                }
+                
+                $transactionFields = $request->input('fields.transactions', '');
+
+                if ($transactionFields) {
+                    $transactionFieldList = explode(',', $transactionFields);
+
+                    if (!in_array('tracker_id', $transactionFieldList)) {
+                        $transactionFieldList[] = 'tracker_id';
+                        $request->merge(['fields' => array_merge($request->input('fields', []), ['transactions' => implode(',', $transactionFieldList)])]);
+                    }
+                }
+            })
             ->paginate($size);
 
         return ApiResponseHelper::successResponse(
@@ -71,7 +89,7 @@ class TransactionController extends Controller
                 )
             )
             ->allowedFields(
-                'id', 'name', 'type', 'amount', 'description', 'date', 'created_at', 'updated_at', 'deleted_at',
+                'id', 'tracker_id', 'name', 'type', 'amount', 'description', 'date', 'created_at', 'updated_at', 'deleted_at',
                 'tracker.id', 'tracker.name'
             )
             ->allowedFilters(
@@ -86,6 +104,20 @@ class TransactionController extends Controller
             )
             ->allowedSorts('name', 'amount', 'date', 'created_at', 'updated_at', 'deleted_at')
             ->defaultSort('-deleted_at')
+            ->when($request->filled('fields.tracker'), function ($query) use ($request) {
+                $transactionFields = $request->input('fields.transactions', '');
+
+                if ($transactionFields) {
+                    $transactionFieldList = explode(',', $transactionFields);
+
+                    if (!in_array('tracker_id', $transactionFieldList)) {
+                        $transactionFieldList[] = 'tracker_id';
+                        $request->merge(['fields' => array_merge($request->input('fields', []), ['transactions' => implode(',', $transactionFieldList)])]);
+                    }
+                }
+
+                $query->with(['tracker' => fn($query) => $query->withTrashed()]);
+            })
             ->paginate($size);
     
             return ApiResponseHelper::successResponse(
@@ -243,6 +275,7 @@ class TransactionController extends Controller
 
     public function restore(Request $request, Transaction $transaction)
     {
+        $transaction = $transaction->load(['tracker' => fn($query) => $query->withTrashed()]);
         Gate::authorize('restore', $transaction);
 
         DB::transaction(function () use ($transaction) {
