@@ -145,7 +145,7 @@ collection:
         meta:
           id: req_61c73209cea34b3cb3d094a1219976b9
           created: 1775545092380
-          modified: 1779022705466
+          modified: 1779032452286
           isPrivate: false
           description: ""
           sortKey: -1775544691115
@@ -164,7 +164,7 @@ collection:
             description: ""
             disabled: false
           - name: fields[transactions]
-            value: id,name,type,amount,description,date,created_at,updated_at
+            value: id,tracker_id,name,type,amount,description,date,created_at,updated_at
             description: ""
             disabled: false
           - name: fields[tracker]
@@ -225,7 +225,7 @@ collection:
         meta:
           id: req_e4f13d79dcf140e2a34acdeb944d8597
           created: 1775545111959
-          modified: 1779003367929
+          modified: 1779032512527
           isPrivate: false
           description: ""
           sortKey: -1775544544086.5
@@ -405,12 +405,12 @@ collection:
             send: true
             store: true
           rebuildPath: true
-      - url: "{{ base_url }}/trackers/{{ tracker_id }}/transactions"
+      - url: "{{ base_url }}/deleted/transactions"
         name: Deleted Transactions
         meta:
           id: req_5f74c1782bca4f57aaa1dec71b58c883
           created: 1779022851078
-          modified: 1779023268550
+          modified: 1779033081100
           isPrivate: false
           description: ""
           sortKey: -1775544617600.75
@@ -429,7 +429,7 @@ collection:
             description: ""
             disabled: false
           - name: fields[transactions]
-            value: id,name,type,amount,description,date,created_at,updated_at,deleted_at
+            value: id,tracker_id,name,type,amount,description,date,created_at,updated_at,deleted_at
             description: ""
             disabled: false
           - name: fields[tracker]
