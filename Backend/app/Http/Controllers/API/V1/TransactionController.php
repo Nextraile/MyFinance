@@ -143,7 +143,20 @@ class TransactionController extends Controller
                 'id', 'tracker_id', 'name', 'type', 'amount', 'description', 'date', 'created_at', 'updated_at', 'deleted_at',
                 'tracker.id', 'tracker.name'
             )
-            ->when($request->filled('fields.tracker') && in_array('tracker_id', explode(',', $request->input('fields.transactions'))), fn($query) => $query->with(['tracker' => fn($query) => $query->withTrashed()]))
+            ->when($request->filled('fields.tracker'), function ($query) use ($request) {
+                $transactionFields = $request->input('fields.transactions', '');
+
+                if ($transactionFields) {
+                    $transactionFieldList = explode(',', $transactionFields);
+
+                    if (!in_array('tracker_id', $transactionFieldList)) {
+                        $transactionFieldList[] = 'tracker_id';
+                        $request->merge(['fields' => array_merge($request->input('fields'), ['transactions' => implode(',', $transactionFieldList)])]);
+                    }
+                }
+
+                $query->with(['tracker' => fn($query) => $query->withTrashed()]);
+            })
             ->firstOrFail();
 
         return ApiResponseHelper::successResponse(
