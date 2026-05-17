@@ -140,9 +140,10 @@ class TransactionController extends Controller
         $transaction = QueryBuilder::for(Transaction::onlyTrashed())
             ->whereKey($transaction->id)
             ->allowedFields(
-                'id', 'name', 'type', 'amount', 'description', 'date', 'created_at', 'updated_at', 'deleted_at',
+                'id', 'tracker_id', 'name', 'type', 'amount', 'description', 'date', 'created_at', 'updated_at', 'deleted_at',
                 'tracker.id', 'tracker.name'
             )
+            ->when($request->filled('fields.tracker') && in_array('tracker_id', explode(',', $request->input('fields.transactions'))), fn($query) => $query->with(['tracker' => fn($query) => $query->withTrashed()]))
             ->firstOrFail();
 
         return ApiResponseHelper::successResponse(
