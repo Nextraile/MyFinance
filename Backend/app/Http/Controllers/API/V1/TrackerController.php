@@ -256,13 +256,10 @@ class TrackerController extends Controller
         Gate::authorize('delete', $tracker);
 
         DB::transaction(function () use ($tracker) {
-            // Lock the tracker record without retrieving it for efficiency
+            $tracker->transactions()->lockForUpdate()->exists();
             $tracker->newQuery()->lockForUpdate()->whereKey($tracker->getKey())->exists();
 
-            if ($tracker->transactions()->lockForUpdate()->exists()) {
-                $tracker->transactions()->delete();
-            }
-
+            $tracker->transactions()->delete();
             $tracker->delete();
         });
 
@@ -276,13 +273,11 @@ class TrackerController extends Controller
         Gate::authorize('restore', $tracker);
  
         DB::transaction(function () use ($tracker) {
-            // Lock the tracker record without retrieving it for efficiency
+            $tracker->transactions()->lockForUpdate()->onlyTrashed()->exists();
             $tracker->newQuery()->lockForUpdate()->onlyTrashed()->whereKey($tracker->getKey())->exists();
-            $tracker->restore();
 
-            if ($tracker->transactions()->lockForUpdate()->onlyTrashed()->exists()) {
-                $tracker->transactions()->onlyTrashed()->restore();
-            }
+            $tracker->restore();
+            $tracker->transactions()->onlyTrashed()->restore();
         });
 
         return ApiResponseHelper::successResponse(
@@ -297,13 +292,10 @@ class TrackerController extends Controller
         Gate::authorize('forceDelete', $tracker);
 
         DB::transaction(function () use ($tracker) {
-            // Lock the tracker record without retrieving it for efficiency
+            $tracker->transactions()->lockForUpdate()->onlyTrashed()->exists();
             $tracker->newQuery()->lockForUpdate()->onlyTrashed()->whereKey($tracker->getKey())->exists();
 
-            if ($tracker->transactions()->lockForUpdate()->onlyTrashed()->exists()) {
-                $tracker->transactions()->onlyTrashed()->forceDelete();
-            }
-
+            $tracker->transactions()->onlyTrashed()->forceDelete();
             $tracker->forceDelete();
         });
 
