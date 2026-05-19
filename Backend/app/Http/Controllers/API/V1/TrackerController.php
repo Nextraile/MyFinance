@@ -259,8 +259,9 @@ class TrackerController extends Controller
             // Lock the tracker record without retrieving it for efficiency
             $tracker->newQuery()->lockForUpdate()->whereKey($tracker->getKey())->exists();
 
-            $tracker->transactions()->lockForUpdate()->exists();
-            $tracker->transactions()->delete();
+            if ($tracker->transactions()->lockForUpdate()->exists()) {
+                $tracker->transactions()->delete();
+            }
 
             $tracker->delete();
         });
@@ -279,8 +280,9 @@ class TrackerController extends Controller
             $tracker->newQuery()->lockForUpdate()->onlyTrashed()->whereKey($tracker->getKey())->exists();
             $tracker->restore();
 
-            $tracker->transactions()->lockForUpdate()->onlyTrashed()->exists();
-            $tracker->transactions()->onlyTrashed()->restore();
+            if ($tracker->transactions()->lockForUpdate()->onlyTrashed()->exists()) {
+                $tracker->transactions()->onlyTrashed()->restore();
+            }
         });
 
         return ApiResponseHelper::successResponse(
@@ -298,8 +300,9 @@ class TrackerController extends Controller
             // Lock the tracker record without retrieving it for efficiency
             $tracker->newQuery()->lockForUpdate()->onlyTrashed()->whereKey($tracker->getKey())->exists();
 
-            $tracker->transactions()->lockForUpdate()->onlyTrashed()->exists();
-            $tracker->transactions()->onlyTrashed()->forceDelete();
+            if ($tracker->transactions()->lockForUpdate()->onlyTrashed()->exists()) {
+                $tracker->transactions()->onlyTrashed()->forceDelete();
+            }
 
             $tracker->forceDelete();
         });
